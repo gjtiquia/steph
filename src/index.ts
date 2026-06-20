@@ -1,4 +1,5 @@
 import { parseArgs } from "util";
+import { Effect } from "effect"
 import * as tui from "./tui"
 import * as web from "./web"
 import * as utils from "./utils"
@@ -17,7 +18,7 @@ function main() {
 }
 
 async function mainAsync(): Promise<Error | null> {
-    // TODO :  this needs to wrap in a try-catch for legible errors
+    // TODO :  this needs to wrap in a try-catch for legible errors (or use Effect...?)
     const { values, positionals } = parseArgs({
         args: Bun.argv,
         options: {
