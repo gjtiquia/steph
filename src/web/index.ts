@@ -1,5 +1,6 @@
+import { Console } from "effect"
 
-export async function mainAsync(port: number): Promise<Error | null> {
-    console.log("TODO: WEB, port", port)
-    return null
+
+export function mainEffect(port: number) {
+    return Console.log("TODO: WEB, port", port)
 }

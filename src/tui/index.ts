@@ -1,5 +1,5 @@
+import { Effect, Console } from "effect"
 
-export async function mainAsync(): Promise<Error | null> {
-    console.log("TODO: TUI")
-    return null
+export function mainEffect() {
+    return Console.log("TODO: TUI Behavior");
 }
