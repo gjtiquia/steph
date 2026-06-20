@@ -1,9 +1,11 @@
 import { parseArgs } from "util";
-import { Effect, Console, pipe } from "effect"
+import { Effect, Console, pipe, Data, Cause } from "effect"
 import * as tui from "./tui"
 import * as web from "./web"
 import * as utils from "./utils"
-import { map } from "effect/Subscribable";
+
+class ParseArgsError extends Data.TaggedError("ParseArgsError")<{ message: string, error: Error }> { }
+class UnexpectedError extends Data.TaggedError("UnexpectedError")<{ message: string }> { }
 
 Effect.runPromise(mainEffect()).catch(console.error);
 
@@ -19,10 +21,11 @@ function mainEffect() {
             strict: true,
             allowPositionals: true,
         }),
-        catch: (e) => {
-            if (e instanceof Error)
-                return e;
-            return new Error(`Unexpected Error: ${e}`);
+        catch: (error) => {
+            // TODO : gotta handle these at the top boundary, cuz these are almost always fatal
+            if (error instanceof Error)
+                return new ParseArgsError({ message: error.message, error });
+            return new UnexpectedError({ message: String(error) });
         }
     })
 
