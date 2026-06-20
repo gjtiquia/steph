@@ -1,15 +1,13 @@
 # steph
 
-To install dependencies:
-
 ```bash
+# install dependencies
 bun install
+
+# run TUI client
+bun start
+
+# run web server
+bun start web --port 3000
 ```
 
-To run:
-
-```bash
-bun run index.ts
-```
-
-This project was created using `bun init` in bun v1.3.10. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
