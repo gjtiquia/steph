@@ -24,16 +24,14 @@ export function createDefaultOptions(): Options {
 
 let globalOptions: Options = createDefaultOptions()
 
-let isSetup = false
+let hasSetupSuccessfully = false
 
-export function trySetup(options: Partial<Options>) {
+export function trySetup(options: Partial<Options> = {}) {
     if (!process.stdin.isTTY) // might be undefined, so safer to check for falsy value, despite the type being a boolean... test by piping into the program
         return { ok: false, error: new Error("stdin is not a TTY") } as const
 
-    if (isSetup)
-        return { ok: false, error: new Error("TUI is already setup") } as const
-
-    isSetup = true
+    if (hasSetupSuccessfully)
+        return { ok: false, error: new Error("TUI has already setup successfully") } as const
 
     globalOptions = {
         ...createDefaultOptions(),
@@ -62,14 +60,22 @@ export function trySetup(options: Partial<Options>) {
         globalOptions.onKeypress({ text, key });
     });
 
+    hasSetupSuccessfully = true
     return { ok: true } as const
 }
 
+let hasCleanedUpSuccessfully = false
+
 function cleanup() {
+    if (hasCleanedUpSuccessfully)
+        return
+
     process.stdin.setRawMode(false)
 
     if (globalOptions.clearOnExit)
         console.clear();
+
+    hasCleanedUpSuccessfully = true
 }
 
 function cleanupAndExit() {
