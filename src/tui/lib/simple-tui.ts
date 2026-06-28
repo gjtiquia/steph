@@ -110,6 +110,10 @@ export function showCursor() {
     process.stdout.write("\u001b[?25h")
 }
 
+export function moveCursorTo(row: number, col: number) {
+    process.stdout.write(`\u001b[${row + 1};${col + 1}H`)
+}
+
 // exported so that users can call it themselves if they want to handle process exit themselves
 export function requestExit() {
     requestCleanupSuccessAndExit();
@@ -163,4 +167,3 @@ function debug(msg: string) {
     if (globalOptions.isDebugMode)
         console.log("[simple-tui]", msg)
 }
-

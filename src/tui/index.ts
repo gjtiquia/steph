@@ -1,10 +1,17 @@
 import * as t from "./lib/simple-tui"
 import { createRootModel } from "./model"
 
+// TODO : eventually we'll need to handle terminal size and resizing
+
 export interface IModel {
-    isCursorVisible(): boolean
     onKeypress(keypress: t.Keypress): void
     getLines(): string[]
+    getCursor(): Cursor | null
+}
+
+export type Cursor = {
+    row: number
+    col: number
 }
 
 const model: IModel = createRootModel()
@@ -41,9 +48,12 @@ function drawUI() {
         console.log(line)
     }
 
-    if (model.isCursorVisible())
+    const cursor = model.getCursor()
+    if (cursor) {
+        t.moveCursorTo(cursor.row, cursor.col)
         t.showCursor()
-    else
+    }
+    else {
         t.hideCursor()
+    }
 }
-

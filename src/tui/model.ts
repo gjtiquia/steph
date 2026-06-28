@@ -1,7 +1,8 @@
-import type { IModel } from ".";
+import type { Cursor, IModel } from ".";
 import type { Keypress } from "./lib/simple-tui";
 
 // TODO : lines and cursor should collapse into a single render result object, cuz cursor position relies on line count, should not need to calculate lines twice
+// TODO : when the use-case arises, onKeypress should become a generic onEvent
 
 export function createRootModel(): IModel {
 
@@ -14,7 +15,7 @@ export function createRootModel(): IModel {
             "steph",
             "",
         ]),
-        createExampleDynamicModel(),
+        createExampleInputModel(),
         createExamplePropsGetterOnlyModel(() => exampleSharedCount),
         createExamplePropsSetterModel(() => exampleSharedCount, (count) => exampleSharedCount = count),
     ]
@@ -33,20 +34,30 @@ export function createRootModel(): IModel {
         return lines
     }
 
-    function isCursorVisible(): boolean {
+    function getCursor(): Cursor | null {
+        let rowOffset = 0
         for (const model of models) {
-            // if at least one model has a visible cursor, then the cursor is visible
-            if (model.isCursorVisible())
-                return true
+            const cursor = model.getCursor()
+
+            // the first model that claims the cursor owns the cursor
+            if (cursor) {
+                return {
+                    row: rowOffset + cursor.row,
+                    col: cursor.col,
+                }
+            }
+
+            rowOffset += model.getLines().length
         }
-        // if all models have no visible cursor, then the cursor is not visible
-        return false
+
+        // no model claims the cursor, no cursor shown
+        return null
     }
 
     return {
-        isCursorVisible,
         onKeypress,
         getLines,
+        getCursor,
     }
 }
 
@@ -61,9 +72,9 @@ export function createEmptyModel(): IModel {
     }
 
     return {
-        isCursorVisible: () => false,
         onKeypress,
         getLines,
+        getCursor: () => null,
     }
 }
 
@@ -82,32 +93,47 @@ export function createDynamicTextModel(linesGetter: () => string[]): IModel {
 }
 
 // example dynamic model
-export function createExampleDynamicModel(): IModel {
+export function createExampleInputModel(): IModel {
     let text = ""
+    let cursorIndex = 0
     let lastInput = "waiting input..."
-    let showCursor = false
+    let ownsCursor = false
 
     function onKeypress(keypress: Keypress) {
         // console.log(keypress)
 
         // hard guard for backspace, weirdly keypress.text.length == 1
         if (keypress.key.name === "backspace") {
-            text = text.slice(0, -1)
+            text = text.slice(0, Math.max(0, cursorIndex - 1)) + text.slice(cursorIndex)
+            cursorIndex = Math.max(0, cursorIndex - 1)
             lastInput = "Special: Backspace"
-            showCursor = true // TODO : needa figure out cursor position during typing
+            ownsCursor = true
+        }
+
+        else if (keypress.key.name === "left") {
+            cursorIndex = Math.max(0, cursorIndex - 1)
+            lastInput = "Special: Left"
+            ownsCursor = true
+        }
+
+        else if (keypress.key.name === "right") {
+            cursorIndex = Math.min(text.length, cursorIndex + 1)
+            lastInput = "Special: Right"
+            ownsCursor = true
         }
 
         // typically safe for typing
         else if (keypress.text && keypress.text.length > 0) {
-            text += keypress.text
+            text = text.slice(0, cursorIndex) + keypress.text + text.slice(cursorIndex)
+            cursorIndex += keypress.text.length
             lastInput = "Text: " + keypress.text
-            showCursor = true // TODO : needa figure out cursor position during typing
+            ownsCursor = true
         }
 
         // for special keys like arrows etc.
         else {
             lastInput = "Key: " + (keypress.key.name ?? keypress.key.sequence)
-            showCursor = false
+            ownsCursor = false
         }
     }
 
@@ -118,10 +144,20 @@ export function createExampleDynamicModel(): IModel {
         ]
     }
 
+    function getCursor(): Cursor | null {
+        if (!ownsCursor)
+            return null
+
+        return {
+            row: 0,
+            col: "Type: ".length + cursorIndex,
+        }
+    }
+
     return {
-        isCursorVisible: () => showCursor,
         onKeypress,
         getLines,
+        getCursor,
     }
 }
 
@@ -136,4 +172,3 @@ export function createExamplePropsSetterModel(countGetter: () => number, countSe
         getLines: () => ["count: " + countGetter() + " (press any key to increment)",],
     }
 }
-
