@@ -10,7 +10,7 @@ type Options = {
     clearOnStart: boolean,
     clearOnExit: boolean,
     callProcessExit: boolean,
-    onKeypress: (keypress: Keypress) => void
+    onKeypress: (keypress: ReadlineKeypress) => void
 }
 
 export function createDefaultOptions(): Options {
@@ -80,7 +80,7 @@ export async function tryRunAsync(): Promise<Result> {
     return result
 }
 
-export type Keypress = {
+export type ReadlineKeypress = {
     text: string | undefined,
     key: readline.Key
 }

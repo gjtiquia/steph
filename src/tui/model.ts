@@ -1,7 +1,7 @@
-import type { Cursor, IModel, RenderResult } from ".";
-import type { Keypress } from "./lib/simple-tui";
+import type { Cursor, IModel, RenderResult, ReadlineKeypress } from ".";
 
 // TODO : when the use-case arises, onKeypress should become a generic onEvent
+// TODO : i have a feeling this can
 
 export function createRootModel(): IModel {
 
@@ -27,7 +27,7 @@ export function createRootModel(): IModel {
         ),
     ]
 
-    function onKeypress(keypress: Keypress) {
+    function onKeypress(keypress: ReadlineKeypress) {
         for (const model of models) {
             model.onKeypress(keypress)
         }
@@ -64,7 +64,7 @@ export function createRootModel(): IModel {
 // imperative programming with React-style syntax
 // can be used as a template
 export function createEmptyModel(): IModel {
-    function onKeypress(keypress: Keypress) {
+    function onKeypress(keypress: ReadlineKeypress) {
     }
 
     return {
@@ -99,7 +99,7 @@ export function createDynamicTextModel(linesGetter: () => string[]): IModel {
 export function createListModel(title: string, options: string[]): IModel {
     let selectedIndex = 0
 
-    function onKeypress(keypress: Keypress) {
+    function onKeypress(keypress: ReadlineKeypress) {
         const isUp = keypress.key.name === "up" || keypress.text === "k"
         const isDown = keypress.key.name === "down" || keypress.text === "j"
 
@@ -136,7 +136,7 @@ export function createExampleInputModel(): IModel {
     let lastInput = "waiting input..."
     let ownsCursor = false
 
-    function onKeypress(keypress: Keypress) {
+    function onKeypress(keypress: ReadlineKeypress) {
         // console.log(keypress)
 
         // hard guard for backspace, weirdly keypress.text.length == 1
