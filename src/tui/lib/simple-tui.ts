@@ -12,6 +12,7 @@ export type Keypress = {
 // keep this flat so defaults can be merged with a simple spread operator
 type Options = {
     isDebugMode: boolean,
+    clearOnStart: boolean,
     clearOnExit: boolean,
     callProcessExit: boolean,
     onKeypress: (keypress: Keypress) => void
@@ -20,7 +21,8 @@ type Options = {
 export function createDefaultOptions(): Options {
     return {
         isDebugMode: false, // false by default, reduce noise
-        clearOnExit: false, // false by default, reduces WTF/min
+        clearOnStart: false, // false by default, reduces WTF/min, prefer explicit intentional behavior than magic
+        clearOnExit: false, // false by default, reduces WTF/min, prefer explicit intentional behavior than magic
         callProcessExit: true, // true by default, reduces WTF/min, so that the program exits when the user presses Ctrl-C, unless the user wants to handle it themselves
         onKeypress: () => { }
     }
@@ -71,10 +73,12 @@ export async function tryRunAsync(): Promise<Result> {
     process.on("SIGINT", requestCleanupSuccessAndExit); // Ctrl-C, does not exit by default, need to manually exit
     process.on("SIGTERM", requestCleanupSuccessAndExit); // Terminated by terminal
 
+    if (globalOptions.clearOnStart)
+        console.clear();
+
     hasStartedRunningSuccessfully = true
 
     debug("tryRunAsync: waiting exit request...")
-
     const result = await runPromise
 
     debug("tryRunAsync: exiting...")

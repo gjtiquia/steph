@@ -1,20 +1,16 @@
 import * as t from "./lib/simple-tui"
 
+let title = "steph"
+let text = ""
+
 export async function mainAsync(): Promise<Error | null> {
-    console.log("TODO: TUI")
+    console.clear()
 
     t.setup({
         // isDebugMode: true,
-        callProcessExit: false,
-        onKeypress: (keypress) => {
-            // typically safe for typing
-            if (keypress.text)
-                console.log("Text:", keypress.text);
-
-            // for special keys like arrows etc.
-            else
-                console.log("Key:", keypress.key.name ?? keypress.key.sequence);
-        }
+        clearOnStart: true,
+        callProcessExit: false, // root main owns process exit
+        onKeypress: handleKeypress,
     })
 
     const { ok, error } = await t.tryRunAsync()
@@ -24,4 +20,21 @@ export async function mainAsync(): Promise<Error | null> {
     return null
 }
 
+function handleKeypress(keypress: t.Keypress) {
+    // typically safe for typing
+    if (keypress.text)
+        text = "Text: " + keypress.text
+
+    // for special keys like arrows etc.
+    else
+        text = "Key:" + (keypress.key.name ?? keypress.key.sequence)
+
+    updateUI();
+}
+
+function updateUI() {
+    console.clear()
+    console.log(title)
+    console.log(text)
+}
 
