@@ -67,11 +67,31 @@ export const SpecialKey = {
     RightArrow: "\u001b[C",
 } as const
 
-export type SpecialKey = typeof SpecialKey[keyof typeof SpecialKey]
+export type SpecialKeyName = keyof typeof SpecialKey
+export type SpecialKey = typeof SpecialKey[SpecialKeyName]
 
-const specialKeysSet = new Set<string>(Object.values(SpecialKey))
+const specialKeyEntries = Object.entries(SpecialKey) as [SpecialKeyName, SpecialKey][]
+
+// like a "reverse lookup" map, so can check if a key is a SpecialKey
+// instead of simply a Set
+const specialKeyNamesByValue = new Map<string, SpecialKeyName>(
+    specialKeyEntries.map(([name, value]) => [value, name])
+)
 
 // type guard - if true, key is a SpecialKey. if false, key is a regular string
 export function isSpecialKey(key: string): key is SpecialKey {
-    return specialKeysSet.has(key)
+    return specialKeyNamesByValue.has(key)
 }
+
+export function tryGetSpecialKeyName(key: string) {
+    const name = specialKeyNamesByValue.get(key)
+
+    if (name === undefined)
+        return { ok: false } as const
+
+    return {
+        ok: true,
+        name
+    } as const
+}
+

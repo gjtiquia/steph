@@ -3,17 +3,17 @@
 // YouTube: https://www.youtube.com/watch?v=Y6jT-IkV0VM&t=1799s
 
 // Types for the result object with discriminated union
-type Success<T> = {
+export type Success<T> = {
     data: T;
     error: null;
 };
 
-type Failure<E> = {
+export type Failure<E> = {
     data: null;
     error: E;
 };
 
-type Result<T, E = Error> = Success<T> | Failure<E>;
+export type Result<T, E = Error> = Success<T> | Failure<E>;
 
 // Main wrapper function
 export async function tryCatchAsync<T, E = Error>(
