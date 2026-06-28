@@ -102,6 +102,14 @@ function onKeypress(text: string | undefined, key: readline.Key) {
     }
 }
 
+export function hideCursor() {
+    process.stdout.write("\u001b[?25l")
+}
+
+export function showCursor() {
+    process.stdout.write("\u001b[?25h")
+}
+
 // exported so that users can call it themselves if they want to handle process exit themselves
 export function requestExit() {
     requestCleanupSuccessAndExit();
@@ -137,6 +145,8 @@ function requestCleanup(result: Result) {
     hasAttemptedCleanup = true
 
     debug("cleanup: running...")
+
+    showCursor()
 
     if (process.stdin.isTTY)
         process.stdin.setRawMode(false)

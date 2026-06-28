@@ -2,6 +2,7 @@ import * as t from "./lib/simple-tui"
 
 let title = "steph"
 let text = "waiting input..."
+let showCursor = false
 
 export async function mainAsync(): Promise<Error | null> {
     updateUI()
@@ -21,12 +22,16 @@ export async function mainAsync(): Promise<Error | null> {
 
 function handleKeypress(keypress: t.Keypress) {
     // typically safe for typing
-    if (keypress.text)
+    if (keypress.text) {
         text = "Text: " + keypress.text
+        showCursor = true // TODO : needa figure out cursor position during typing
+    }
 
     // for special keys like arrows etc.
-    else
+    else {
         text = "Key: " + (keypress.key.name ?? keypress.key.sequence)
+        showCursor = false
+    }
 
     updateUI();
 }
@@ -35,5 +40,10 @@ function updateUI() {
     console.clear()
     console.log(title)
     console.log(text)
+
+    if (showCursor)
+        t.showCursor()
+    else
+        t.hideCursor()
 }
 
