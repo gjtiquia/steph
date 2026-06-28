@@ -4,11 +4,6 @@
 // works in Bun: https://bun.com/reference/node/readline
 import readline from "node:readline"
 
-export type Keypress = {
-    text: string | undefined,
-    key: readline.Key
-}
-
 // keep this flat so defaults can be merged with a simple spread operator
 type Options = {
     isDebugMode: boolean,
@@ -83,6 +78,11 @@ export async function tryRunAsync(): Promise<Result> {
 
     debug("tryRunAsync: exiting...")
     return result
+}
+
+export type Keypress = {
+    text: string | undefined,
+    key: readline.Key
 }
 
 function onKeypress(text: string | undefined, key: readline.Key) {
