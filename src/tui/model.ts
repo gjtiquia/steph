@@ -1,7 +1,6 @@
-import type { Cursor, IModel } from ".";
+import type { Cursor, IModel, RenderResult } from ".";
 import type { Keypress } from "./lib/simple-tui";
 
-// TODO : lines and cursor should collapse into a single render result object, cuz cursor position relies on line count, should not need to calculate lines twice
 // TODO : when the use-case arises, onKeypress should become a generic onEvent
 
 export function createRootModel(): IModel {
@@ -26,38 +25,31 @@ export function createRootModel(): IModel {
         }
     }
 
-    function getLines(): string[] {
+    function render(): RenderResult {
         const lines: string[] = []
-        for (const model of models) {
-            lines.push(...model.getLines())
-        }
-        return lines
-    }
+        let cursor: Cursor | null = null
 
-    function getCursor(): Cursor | null {
-        let rowOffset = 0
         for (const model of models) {
-            const cursor = model.getCursor()
+            const result = model.render()
 
             // the first model that claims the cursor owns the cursor
-            if (cursor) {
-                return {
-                    row: rowOffset + cursor.row,
-                    col: cursor.col,
+            // if no model claims the cursor, no cursor shown
+            if (!cursor && result.cursor) {
+                cursor = {
+                    row: lines.length + result.cursor.row,
+                    col: result.cursor.col,
                 }
             }
 
-            rowOffset += model.getLines().length
+            lines.push(...result.lines)
         }
 
-        // no model claims the cursor, no cursor shown
-        return null
+        return { lines, cursor }
     }
 
     return {
         onKeypress,
-        getLines,
-        getCursor,
+        render,
     }
 }
 
@@ -67,33 +59,38 @@ export function createEmptyModel(): IModel {
     function onKeypress(keypress: Keypress) {
     }
 
-    function getLines(): string[] {
-        return []
-    }
-
     return {
         onKeypress,
-        getLines,
-        getCursor: () => null,
+        render: () => ({
+            lines: [],
+            cursor: null,
+        }),
     }
 }
 
 export function createStaticTextModel(lines: string[]): IModel {
     return {
         ...createEmptyModel(),
-        getLines: () => lines,
+        render: () => ({
+            lines,
+            cursor: null,
+        }),
     }
 }
 
 export function createDynamicTextModel(linesGetter: () => string[]): IModel {
     return {
         ...createEmptyModel(),
-        getLines: linesGetter,
+        render: () => ({
+            lines: linesGetter(),
+            cursor: null,
+        }),
     }
 }
 
 // example dynamic model
 export function createExampleInputModel(): IModel {
+    const inputPrefix = "Type: "
     let text = ""
     let cursorIndex = 0
     let lastInput = "waiting input..."
@@ -137,27 +134,27 @@ export function createExampleInputModel(): IModel {
         }
     }
 
-    function getLines(): string[] {
-        return [
-            "Type: " + text,
+    function render(): RenderResult {
+        const lines = [
+            inputPrefix + text,
             lastInput,
         ]
-    }
 
-    function getCursor(): Cursor | null {
         if (!ownsCursor)
-            return null
+            return { lines, cursor: null }
 
         return {
-            row: 0,
-            col: "Type: ".length + cursorIndex,
+            lines,
+            cursor: {
+                row: 0,
+                col: inputPrefix.length + cursorIndex,
+            },
         }
     }
 
     return {
         onKeypress,
-        getLines,
-        getCursor,
+        render,
     }
 }
 
@@ -169,6 +166,9 @@ export function createExamplePropsSetterModel(countGetter: () => number, countSe
     return {
         ...createEmptyModel(),
         onKeypress: () => countSetter(countGetter() + 1),
-        getLines: () => ["count: " + countGetter() + " (press any key to increment)",],
+        render: () => ({
+            lines: ["count: " + countGetter() + " (press any key to increment)",],
+            cursor: null,
+        }),
     }
 }

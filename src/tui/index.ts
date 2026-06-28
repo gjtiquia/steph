@@ -5,8 +5,12 @@ import { createRootModel } from "./model"
 
 export interface IModel {
     onKeypress(keypress: t.Keypress): void
-    getLines(): string[]
-    getCursor(): Cursor | null
+    render(): RenderResult
+}
+
+export type RenderResult = {
+    lines: string[]
+    cursor: Cursor | null
 }
 
 export type Cursor = {
@@ -44,11 +48,13 @@ function clearUI() {
 }
 
 function drawUI() {
-    for (const line of model.getLines()) {
+    const result = model.render()
+
+    for (const line of result.lines) {
         console.log(line)
     }
 
-    const cursor = model.getCursor()
+    const cursor = result.cursor
     if (cursor) {
         t.moveCursorTo(cursor.row, cursor.col)
         t.showCursor()
