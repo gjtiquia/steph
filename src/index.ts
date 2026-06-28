@@ -2,23 +2,29 @@ import { parseArgs } from "util";
 import * as tui from "./tui"
 import * as web from "./web"
 import * as utils from "./utils"
+import { tryCatchSync } from "./lib/try-catch";
 
 main()
 
 function main() {
     mainAsync()
         .then((error) => {
-            if (error !== null)
+            if (error !== null) {
+                console.error(`Error caught gracefully: ${error.message}`)
                 console.error(error)
+            }
         })
         .catch((error) => {
+            console.error(`Exception caught!: ${error.message}`)
             console.error(error)
         })
 }
 
 async function mainAsync(): Promise<Error | null> {
-    // TODO :  this needs to wrap in a try-catch for legible errors
-    const { values, positionals } = parseArgs({
+    // TODO : can consider improving this with Commander.js
+    // https://github.com/tj/commander.js/
+    // https://betterstack.com/community/guides/scaling-nodejs/commander-explained/ 
+    const parseArgsResult = tryCatchSync(() => parseArgs({
         args: Bun.argv,
         options: {
             port: {
@@ -27,7 +33,13 @@ async function mainAsync(): Promise<Error | null> {
         },
         strict: true,
         allowPositionals: true,
-    });
+    }));
+
+    if (parseArgsResult.error !== null) {
+        return parseArgsResult.error
+    }
+
+    const { values, positionals } = parseArgsResult.data
 
     const bunPath = positionals[0]
     const scriptPath = positionals[1]
