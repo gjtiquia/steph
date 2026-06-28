@@ -1,16 +1,17 @@
 import * as t from "./lib/simple-tui"
-import { createModel } from "./model"
+import { createRootModel } from "./model"
 
 export interface IModel {
+    isCursorVisible(): boolean
     onKeypress(keypress: t.Keypress): void
     getLines(): string[]
-    isCursorVisible(): boolean
 }
 
-const model: IModel = createModel()
+const model: IModel = createRootModel()
 
 export async function mainAsync(): Promise<Error | null> {
-    updateUI()
+    clearUI()
+    drawUI()
 
     t.setup({
         // isDebugMode: true,
@@ -26,13 +27,16 @@ export async function mainAsync(): Promise<Error | null> {
 }
 
 function handleKeypress(keypress: t.Keypress) {
+    clearUI() // clear first so that... we can cheat using console.log onKeypress
     model.onKeypress(keypress)
-    updateUI();
+    drawUI();
 }
 
-function updateUI() {
+function clearUI() {
     console.clear()
+}
 
+function drawUI() {
     for (const line of model.getLines()) {
         console.log(line)
     }
