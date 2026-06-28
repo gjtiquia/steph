@@ -1,14 +1,13 @@
 import * as t from "./lib/simple-tui"
 
 let title = "steph"
-let text = ""
+let text = "waiting input..."
 
 export async function mainAsync(): Promise<Error | null> {
-    console.clear()
+    updateUI()
 
     t.setup({
         // isDebugMode: true,
-        clearOnStart: true,
         callProcessExit: false, // root main owns process exit
         onKeypress: handleKeypress,
     })
@@ -27,7 +26,7 @@ function handleKeypress(keypress: t.Keypress) {
 
     // for special keys like arrows etc.
     else
-        text = "Key:" + (keypress.key.name ?? keypress.key.sequence)
+        text = "Key: " + (keypress.key.name ?? keypress.key.sequence)
 
     updateUI();
 }
