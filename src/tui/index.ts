@@ -1,9 +1,11 @@
-import * as tui from "./lib/simple-tui"
+import * as t from "./lib/simple-tui"
 
 export async function mainAsync(): Promise<Error | null> {
     console.log("TODO: TUI")
 
-    const { ok, error } = tui.trySetup({
+    t.setup({
+        // isDebugMode: true,
+        callProcessExit: false,
         onKeypress: (keypress) => {
             // typically safe for typing
             if (keypress.text)
@@ -15,9 +17,11 @@ export async function mainAsync(): Promise<Error | null> {
         }
     })
 
+    const { ok, error } = await t.tryRunAsync()
     if (!ok)
         return error
 
     return null
 }
+
 

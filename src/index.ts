@@ -12,11 +12,17 @@ function main() {
             if (error !== null) {
                 console.error(`Error caught gracefully: ${error.message}`)
                 console.error(error)
+                process.exit(1)
+                return;
             }
+
+            // we need to call it ourselves cuz the TUI does some process overrides
+            process.exit(0)
         })
         .catch((error) => {
             console.error(`Unexpected Exception caught!: ${error.message}`)
             console.error(error)
+            process.exit(1)
         })
 }
 

@@ -11,32 +11,50 @@ export type Keypress = {
 
 // keep this flat so defaults can be merged with a simple spread operator
 type Options = {
-    clearOnExit: boolean
+    isDebugMode: boolean,
+    clearOnExit: boolean,
+    callProcessExit: boolean,
     onKeypress: (keypress: Keypress) => void
 }
 
 export function createDefaultOptions(): Options {
     return {
+        isDebugMode: false, // false by default, reduce noise
         clearOnExit: false, // false by default, reduces WTF/min
+        callProcessExit: true, // true by default, reduces WTF/min, so that the program exits when the user presses Ctrl-C, unless the user wants to handle it themselves
         onKeypress: () => { }
     }
 }
 
 let globalOptions: Options = createDefaultOptions()
 
-let hasSetupSuccessfully = false
-
-export function trySetup(options: Partial<Options> = {}) {
-    if (!process.stdin.isTTY) // might be undefined, so safer to check for falsy value, despite the type being a boolean... test by piping into the program
-        return { ok: false, error: new Error("stdin is not a TTY") } as const
-
-    if (hasSetupSuccessfully)
-        return { ok: false, error: new Error("TUI has already setup successfully") } as const
-
+export function setup(options: Partial<Options> = {}) {
     globalOptions = {
         ...createDefaultOptions(),
         ...options
     }
+}
+
+let hasStartedRunningSuccessfully = false
+
+type Success = { readonly ok: true, readonly error: undefined }
+type Failure = { readonly ok: false, readonly error: Error }
+type Result = Success | Failure
+
+let resolveRunPromise: (result: Result) => void = (result) => { }
+
+export async function tryRunAsync(): Promise<Result> {
+    if (!process.stdin.isTTY) // might be undefined, so safer to check for falsy value, despite the type being a boolean... test by piping into the program
+        return { ok: false, error: new Error("stdin is not a TTY") } as const
+
+    if (hasStartedRunningSuccessfully)
+        return { ok: false, error: new Error("TUI is already running") } as const
+
+    debug("tryRunAsync: running...")
+
+    const runPromise = new Promise<Result>((resolve) => {
+        resolveRunPromise = resolve
+    })
 
     // allows process.stdin to emit "keypress" events, which is necessary for reading special keys like arrow keys
     readline.emitKeypressEvents(process.stdin)
@@ -45,41 +63,90 @@ export function trySetup(options: Partial<Options> = {}) {
     process.stdin.resume(); // necessary or else "keypress" event wont fire
     process.stdin.setEncoding("utf8") // so can do string comparison on received keypresses
 
-    // cleanup listeners
-    process.on("exit", cleanup); // Regular exit on program end
-    process.on("SIGINT", cleanupAndExit); // Ctrl-C, does not exit by default, need to manually exit
-    process.on("SIGTERM", cleanupAndExit); // Terminated by terminal
-
     // input listeners
-    process.stdin.on("keypress", (text: string | undefined, key: readline.Key) => {
-        if (key.ctrl && key.name === "c") {
-            process.kill(process.pid, "SIGINT");
-            return;
-        }
+    process.stdin.on("keypress", onKeypress)
 
-        globalOptions.onKeypress({ text, key });
-    });
+    // cleanup listeners
+    process.on("exit", requestCleanupSuccess); // Regular exit on program end
+    process.on("SIGINT", requestCleanupSuccessAndExit); // Ctrl-C, does not exit by default, need to manually exit
+    process.on("SIGTERM", requestCleanupSuccessAndExit); // Terminated by terminal
 
-    hasSetupSuccessfully = true
-    return { ok: true } as const
+    hasStartedRunningSuccessfully = true
+
+    debug("tryRunAsync: waiting exit request...")
+
+    const result = await runPromise
+
+    debug("tryRunAsync: exiting...")
+    return result
 }
 
-let hasCleanedUpSuccessfully = false
+function onKeypress(text: string | undefined, key: readline.Key) {
+    if (key.ctrl && key.name === "c") {
+        process.kill(process.pid, "SIGINT");
+        return;
+    }
 
-function cleanup() {
-    if (hasCleanedUpSuccessfully)
+    // try/catch wrap cuz you never know what the user will do in their onKeypress callback, and we want to make sure we clean up properly if they throw an error
+    try {
+        globalOptions.onKeypress({ text, key });
+    } catch (error) {
+        if (error instanceof Error)
+            requestCleanupError(error)
+        else
+            requestCleanupError(new Error(String(error)))
+    }
+}
+
+// exported so that users can call it themselves if they want to handle process exit themselves
+export function requestExit() {
+    requestCleanupSuccessAndExit();
+}
+
+function requestCleanupSuccessAndExit() {
+    debug("cleanupAndExit: running...")
+
+    requestCleanupSuccess();
+
+    debug("cleanupAndExit: exiting...")
+
+    if (globalOptions.callProcessExit)
+        process.exit(0);
+}
+
+function requestCleanupSuccess() {
+    requestCleanup({ ok: true, error: undefined })
+}
+
+function requestCleanupError(error: Error) {
+    requestCleanup({ ok: false, error: error })
+}
+
+let hasAttemptedCleanup = false
+
+function requestCleanup(result: Result) {
+    if (hasAttemptedCleanup) {
+        debug("cleanup: already attempted, skipping...")
         return
+    }
 
-    process.stdin.setRawMode(false)
+    hasAttemptedCleanup = true
+
+    debug("cleanup: running...")
+
+    if (process.stdin.isTTY)
+        process.stdin.setRawMode(false)
 
     if (globalOptions.clearOnExit)
         console.clear();
 
-    hasCleanedUpSuccessfully = true
+    resolveRunPromise(result)
+
+    debug("cleanup: success!")
 }
 
-function cleanupAndExit() {
-    cleanup();
-    process.exit(0);
+function debug(msg: string) {
+    if (globalOptions.isDebugMode)
+        console.log("[simple-tui]", msg)
 }
 

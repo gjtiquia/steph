@@ -23,7 +23,7 @@ export async function tryCatchAsync<T, E = Error>(
         const data = await promise;
         return { data, error: null };
     } catch (error) {
-        return { data: null, error: error as E };
+        return { data: null, error: toError(error) as E };
     }
 }
 
@@ -35,6 +35,14 @@ export function tryCatchSync<T, E = Error>(
         const data = fn();
         return { data, error: null };
     } catch (error) {
-        return { data: null, error: error as E };
+        return { data: null, error: toError(error) as E };
     }
+}
+
+// (GJ) because sometimes ints or strings are thrown instead of Error objects, this function converts them to Error objects
+export function toError(error: unknown): Error {
+    if (error instanceof Error)
+        return error
+
+    return new Error(String(error))
 }
