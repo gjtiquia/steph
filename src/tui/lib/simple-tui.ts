@@ -2,7 +2,7 @@
 // seems reusable enough to be a simple TUI lib
 
 // works in Bun: https://bun.com/reference/node/readline
-import readline from "readline"
+import readline from "node:readline"
 
 export type Keypress = {
     text: string | undefined,
@@ -24,7 +24,17 @@ export function createDefaultOptions(): Options {
 
 let globalOptions: Options = createDefaultOptions()
 
-export function setup(options: Partial<Options>) {
+let isSetup = false
+
+export function trySetup(options: Partial<Options>) {
+    if (!process.stdin.isTTY) // might be undefined, so safer to check for falsy value, despite the type being a boolean... test by piping into the program
+        return { ok: false, error: new Error("stdin is not a TTY") } as const
+
+    if (isSetup)
+        return { ok: false, error: new Error("TUI is already setup") } as const
+
+    isSetup = true
+
     globalOptions = {
         ...createDefaultOptions(),
         ...options
@@ -34,7 +44,7 @@ export function setup(options: Partial<Options>) {
     readline.emitKeypressEvents(process.stdin)
 
     process.stdin.setRawMode(true)
-    process.stdin.resume(); // necessary or else "data" event wont fire
+    process.stdin.resume(); // necessary or else "keypress" event wont fire
     process.stdin.setEncoding("utf8") // so can do string comparison on received keypresses
 
     // cleanup listeners
@@ -51,6 +61,8 @@ export function setup(options: Partial<Options>) {
 
         globalOptions.onKeypress({ text, key });
     });
+
+    return { ok: true } as const
 }
 
 function cleanup() {

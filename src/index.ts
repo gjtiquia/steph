@@ -15,7 +15,7 @@ function main() {
             }
         })
         .catch((error) => {
-            console.error(`Exception caught!: ${error.message}`)
+            console.error(`Unexpected Exception caught!: ${error.message}`)
             console.error(error)
         })
 }
