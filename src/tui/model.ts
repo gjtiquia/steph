@@ -7,7 +7,11 @@ export function createRootModel(): IModel {
 
     // TODO : history, title, dashboard, url, ui, footer
     const models = [
-        createTitleModel(),
+        createStaticTextModel([
+            "",
+            "steph",
+            "",
+        ]),
         createExampleDynamicModel(),
         createExamplePropsGetterOnlyModel(() => exampleSharedCount),
         createExamplePropsSetterModel(() => exampleSharedCount, (count) => exampleSharedCount = count),
@@ -129,9 +133,5 @@ export function createExamplePropsSetterModel(countGetter: () => number, countSe
         onKeypress: () => countSetter(countGetter() + 1),
         getLines: () => ["count: " + countGetter() + " (press any key to increment)",],
     }
-}
-
-export function createTitleModel(): IModel {
-    return createStaticTextModel(["steph"]);
 }
 
