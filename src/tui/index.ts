@@ -1,19 +1,20 @@
 import * as tui from "./lib/simple-tui"
 
 export async function mainAsync(): Promise<Error | null> {
-    tui.setup({
-        onInput: (key) => {
-            if (tui.isSpecialKey(key)) {
-                console.log("Special Key: " + tui.tryGetSpecialKeyName(key).name);
-            }
-            else {
-                console.log("Key: " + key);
-            }
+    console.log("TODO: TUI")
 
+    tui.setup({
+        onKeypress: (keypress) => {
+            // typically safe for typing
+            if (keypress.text)
+                console.log("Text:", keypress.text);
+
+            // for special keys like arrows etc
+            else
+                console.log("Key:", keypress.key.name ?? keypress.key.sequence);
         }
     })
 
-    console.log("TODO: TUI")
     return null
 }
 
