@@ -1,6 +1,8 @@
 import type { IModel } from ".";
 import type { Keypress } from "./lib/simple-tui";
 
+// TODO : probably... gonna do recursive models all the way down, with basic split of [history, title, dashboard, url, ui, footer] ?
+
 let title = "steph"
 let text = "waiting input..."
 let showCursor = false
