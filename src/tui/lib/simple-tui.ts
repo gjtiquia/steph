@@ -1,11 +1,6 @@
 // (GJ) ported from early Bun TS version of github.com/gjtiquia/curly
 // seems reusable enough to be a simple TUI lib
 
-export const KeyUpArrow = "\u001b[A"
-export const KeyDownArrow = "\u001b[B"
-export const KeyLeftArrow = "\u001b[D"
-export const KeyRightArrow = "\u001b[C"
-
 // keep this flat so defaults can be merged with a simple spread operator
 type Options = {
     clearOnExit: boolean
@@ -63,4 +58,20 @@ function cleanupAndExit() {
 function onInput(key: string) {
     globalOptions.onInput(key)
     console.log("Key:" + JSON.stringify(key));
+}
+
+export const SpecialKey = {
+    UpArrow: "\u001b[A",
+    DownArrow: "\u001b[B",
+    LeftArrow: "\u001b[D",
+    RightArrow: "\u001b[C",
+} as const
+
+export type SpecialKey = typeof SpecialKey[keyof typeof SpecialKey]
+
+const specialKeysSet = new Set<string>(Object.values(SpecialKey))
+
+// type guard - if true, key is a SpecialKey. if false, key is a regular string
+export function isSpecialKey(key: string): key is SpecialKey {
+    return specialKeysSet.has(key)
 }
