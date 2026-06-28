@@ -1,6 +1,8 @@
 import type { IModel } from ".";
 import type { Keypress } from "./lib/simple-tui";
 
+// TODO : lines and cursor should collapse into a single render result object, cuz cursor position relies on line count, should not need to calculate lines twice
+
 export function createRootModel(): IModel {
 
     let exampleSharedCount = 0
