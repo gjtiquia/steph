@@ -17,6 +17,14 @@ export function createRootModel(): IModel {
         createExampleInputModel(),
         createExamplePropsGetterOnlyModel(() => exampleSharedCount),
         createExamplePropsSetterModel(() => exampleSharedCount, (count) => exampleSharedCount = count),
+        createListModel(
+            "this is a list with options",
+            [
+                "option 1",
+                "option 2",
+                "option 3",
+            ]
+        ),
     ]
 
     function onKeypress(keypress: Keypress) {
@@ -85,6 +93,38 @@ export function createDynamicTextModel(linesGetter: () => string[]): IModel {
             lines: linesGetter(),
             cursor: null,
         }),
+    }
+}
+
+export function createListModel(title: string, options: string[]): IModel {
+    let selectedIndex = 0
+
+    function onKeypress(keypress: Keypress) {
+        const isUp = keypress.key.name === "up" || keypress.text === "k"
+        const isDown = keypress.key.name === "down" || keypress.text === "j"
+
+        if (isUp)
+            selectedIndex = Math.max(0, selectedIndex - 1)
+        else if (isDown && options.length > 0)
+            selectedIndex = Math.min(options.length - 1, selectedIndex + 1)
+    }
+
+    function render(): RenderResult {
+        const lines = [
+            title,
+            "",
+            ...options.map((option, index) => {
+                const marker = index === selectedIndex ? ">" : " "
+                return `${marker} ${index + 1}) ${option}`
+            }),
+        ]
+
+        return { lines, cursor: null }
+    }
+
+    return {
+        onKeypress,
+        render,
     }
 }
 
