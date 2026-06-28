@@ -1,8 +1,13 @@
 import * as t from "./lib/simple-tui"
+import { createModel } from "./model"
 
-let title = "steph"
-let text = "waiting input..."
-let showCursor = false
+export interface IModel {
+    onKeypress(keypress: t.Keypress): void
+    getLines(): string[]
+    isCursorVisible(): boolean
+}
+
+const model: IModel = createModel()
 
 export async function mainAsync(): Promise<Error | null> {
     updateUI()
@@ -21,27 +26,18 @@ export async function mainAsync(): Promise<Error | null> {
 }
 
 function handleKeypress(keypress: t.Keypress) {
-    // typically safe for typing
-    if (keypress.text) {
-        text = "Text: " + keypress.text
-        showCursor = true // TODO : needa figure out cursor position during typing
-    }
-
-    // for special keys like arrows etc.
-    else {
-        text = "Key: " + (keypress.key.name ?? keypress.key.sequence)
-        showCursor = false
-    }
-
+    model.onKeypress(keypress)
     updateUI();
 }
 
 function updateUI() {
     console.clear()
-    console.log(title)
-    console.log(text)
 
-    if (showCursor)
+    for (const line of model.getLines()) {
+        console.log(line)
+    }
+
+    if (model.isCursorVisible())
         t.showCursor()
     else
         t.hideCursor()
