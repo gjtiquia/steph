@@ -7,10 +7,13 @@
         "start": "tsc --noEmit && bun run src/index.ts"
     },
     "devDependencies": {
-        "@types/bun": "latest",
+        "@types/bun": "^1.3.14",
         "prettier": "3.9.6"
     },
     "peerDependencies": {
         "typescript": "^5"
+    },
+    "dependencies": {
+        "elysia": "^1.4.29"
     }
 }
