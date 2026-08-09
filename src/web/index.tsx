@@ -1,6 +1,6 @@
 import { html, Html } from "@elysia/html";
 import { Elysia } from "elysia";
-import { HomePage } from "./HomePage";
+import pages from "./pages";
 
 // TODO : thinking... with the web having so many "quirks", it might be better to emulate browser behavior in TUI, than stripping down browser to TUI
 
@@ -13,8 +13,7 @@ export async function mainAsync(port: number): Promise<Error[] | null> {
             console.error(path);
             console.error(error);
         })
-        .use(html())
-        .get("/", () => <HomePage />)
+        .use(pages)
         .listen(port);
 
     console.log(

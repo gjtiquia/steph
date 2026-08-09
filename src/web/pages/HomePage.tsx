@@ -4,6 +4,7 @@ export function HomePage() {
     return (
         <html lang="en">
             <head>
+                <link href="public/styles.css" rel="stylesheet" />
                 <title>Hello World</title>
             </head>
             <body>
