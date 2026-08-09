@@ -1,13 +1,16 @@
 {
     "compilerOptions": {
         // Environment setup & latest features
-        "lib": ["ESNext"],
+        // "lib": ["ESNext"], // need to disable so that can write browser scripts
         "target": "ESNext",
         "module": "Preserve",
         "moduleDetection": "force",
+
+        // Elysia JSX support
 	    "jsx": "react",
 		"jsxFactory": "Html.createElement",
 		"jsxFragmentFactory": "Html.Fragment",
+
         "allowJs": true,
 
         // Bundler mode

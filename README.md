@@ -21,4 +21,7 @@ bun run dev:web
 
 # build tailwind styles.css
 bun run build:tailwind
+
+# bundle web frontend scripts
+bun run build:scripts
 ```

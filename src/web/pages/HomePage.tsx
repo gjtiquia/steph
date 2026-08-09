@@ -16,6 +16,7 @@ export function HomePage() {
                     href={`public/styles.css?v=${version}`}
                     rel="stylesheet"
                 />
+                <script type="module" src={`/public/index.js?v=${version}`}></script>
                 <title>steph</title>
             </head>
             <body class="bg-stone-900 text-stone-50 font-fira">
@@ -39,9 +40,9 @@ export function HomePage() {
                 </section>
 
                 <section>
-                    <p>Text:</p>
-                    <p>Count: 0 (this is using shared state)</p>
-                    <p>Count: 0 (press any key to increment)</p>
+                    <p data-key>Key:</p>
+                    <p>Count: <span data-count>0</span> (this is using shared state)</p>
+                    <p>Count: <span data-count>0</span> (press any key to increment)</p>
                 </section>
 
                 <section>
