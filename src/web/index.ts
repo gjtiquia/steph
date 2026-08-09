@@ -1,4 +1,4 @@
-import { Elysia } from "elysia";
+import { Elysia, status } from "elysia";
 
 // TODO : thinking... with the web having so many "quirks", it might be better to emulate browser behavior in TUI, than stripping down browser to TUI
 
@@ -6,8 +6,14 @@ import { Elysia } from "elysia";
 
 export async function mainAsync(port: number): Promise<Error[] | null> {
     const app = new Elysia()
-        .onError(({ error }) => {
-            console.error(error)
+        .onError(({ error, path }) => {
+
+            // TODO : temporarily ignored to reduce noise
+            if (path.includes("favicon"))
+                return;
+
+            console.error(path)
+            console.error(error);
         })
         .get("/", () => "Hello Elysia")
         .get("/error", () => {
@@ -22,3 +28,4 @@ export async function mainAsync(port: number): Promise<Error[] | null> {
     // server process now owns process exit and error logging
     return null;
 }
+
