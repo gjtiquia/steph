@@ -6,8 +6,13 @@ import { Elysia } from "elysia";
 
 export async function mainAsync(port: number): Promise<Error[] | null> {
     const app = new Elysia()
+        .onError(({ error }) => {
+            console.error(error)
+        })
         .get("/", () => "Hello Elysia")
-        .get("/error", () => {throw new Error("forced elysia error")})
+        .get("/error", () => {
+            throw new Error("forced elysia error");
+        })
         .listen(port);
 
     console.log(
@@ -15,5 +20,5 @@ export async function mainAsync(port: number): Promise<Error[] | null> {
     );
 
     // server process now owns process exit and error logging
-    return null
+    return null;
 }
