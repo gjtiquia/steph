@@ -1,19 +1,20 @@
-import { Elysia, status } from "elysia";
+import { html, Html } from "@elysia/html";
+import { Elysia } from "elysia";
+import { HomePage } from "./HomePage";
 
 // TODO : thinking... with the web having so many "quirks", it might be better to emulate browser behavior in TUI, than stripping down browser to TUI
-
-// TODO : hoping to decouple to a point that its "backend agnostic", at least the frontend parts!
 
 export async function mainAsync(port: number): Promise<Error[] | null> {
     const app = new Elysia()
         .onError(({ error, path }) => {
-            // TODO : temporarily ignored to reduce noise
+            // temporarily ignored to reduce noise
             if (path.includes("favicon")) return;
 
             console.error(path);
             console.error(error);
         })
-        .get("/", () => "Hello Elysia")
+        .use(html())
+        .get("/", () => <HomePage />)
         .listen(port);
 
     console.log(
