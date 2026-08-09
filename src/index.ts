@@ -2,7 +2,7 @@ import { parseArgs } from "util";
 import * as tui from "./tui";
 import * as web from "./web";
 import * as utils from "./utils";
-import { toError, tryCatchSync } from "./lib/try-catch";
+import { printErrors, toError, tryCatchSync } from "./lib/try-catch";
 
 main();
 
@@ -10,26 +10,20 @@ function main() {
     mainAsync()
         .then((errors) => {
             if (errors !== null) {
-                for (let i = 0; i < errors.length; i++) {
-                    const error = errors[i];
-                    if (!error) continue;
+                console.error("Errors caught gracefully");
+                printErrors(errors);
 
-                    console.error(
-                        `Error ${i + 1}/${errors.length} caught gracefully: ${error.message}`,
-                    );
-                    console.error(error);
-                }
+                // should not exit code 0 if there is any error
                 process.exit(1);
                 return;
             }
-
-            // we need to call it ourselves cuz the TUI does some process overrides
-            process.exit(0);
         })
         .catch((e) => {
             const error = toError(e);
-            console.error(`Unexpected Exception caught!: ${error.message}`);
+            console.error(`Unexpected Error caught!: ${error.message}`);
             console.error(error);
+
+            // as a fallback in-case process.exit not called in TUI
             process.exit(1);
         });
 }

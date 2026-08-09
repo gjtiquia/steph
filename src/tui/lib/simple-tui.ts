@@ -84,7 +84,7 @@ export async function tryRunAsync(): Promise<Result> {
     debug("tryRunAsync: waiting exit request...");
     const result = await runPromise;
 
-    debug("tryRunAsync: exiting...");
+    debug("tryRunAsync: exiting..."); // this wont run if callProcessExit is true, as process already exited
     return result;
 }
 

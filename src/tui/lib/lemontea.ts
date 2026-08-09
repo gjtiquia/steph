@@ -36,7 +36,7 @@ export async function runAsync(m: IModel): Promise<Error[] | null> {
 
     t.setup({
         // isDebugMode: true,
-        callProcessExit: false, // root main owns process exit
+        callProcessExit: false, // root main owns process exit to handle all errors gracefully
         onKeypress: handleKeypress,
         onCleanup: onBeforeCleanup,
     });

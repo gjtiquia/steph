@@ -43,3 +43,15 @@ export function toError(error: unknown): Error {
 
     return new Error(String(error));
 }
+
+export function printErrors(errors: Error[]) {
+    for (let i = 0; i < errors.length; i++) {
+        const error = errors[i];
+        if (!error) continue;
+
+        console.error(
+            `Error ${i + 1}/${errors.length}: ${error.message}`,
+        );
+        console.error(error);
+    }
+}
