@@ -1,9 +1,9 @@
-import type { Cursor, IModel, RenderResult, ReadlineKeypress } from ".";
+import * as tea from "./lib/lemontea";
 
 // TODO : when the use-case arises, onKeypress should become a generic onEvent
 // TODO : i have a feeling this can
 
-export function createRootModel(): IModel {
+export function createRootModel(): tea.IModel {
 
     let exampleSharedCount = 0
 
@@ -27,15 +27,15 @@ export function createRootModel(): IModel {
         ),
     ]
 
-    function onKeypress(keypress: ReadlineKeypress) {
+    function onKeypress(keypress: tea.ReadlineKeypress) {
         for (const model of models) {
             model.onKeypress(keypress)
         }
     }
 
-    function render(): RenderResult {
+    function render(): tea.RenderResult {
         const lines: string[] = []
-        let cursor: Cursor | null = null
+        let cursor: tea.Cursor | null = null
 
         for (const model of models) {
             const result = model.render()
@@ -63,8 +63,8 @@ export function createRootModel(): IModel {
 
 // imperative programming with React-style syntax
 // can be used as a template
-export function createEmptyModel(): IModel {
-    function onKeypress(keypress: ReadlineKeypress) {
+export function createEmptyModel(): tea.IModel {
+    function onKeypress(keypress: tea.ReadlineKeypress) {
     }
 
     return {
@@ -76,7 +76,7 @@ export function createEmptyModel(): IModel {
     }
 }
 
-export function createStaticTextModel(lines: string[]): IModel {
+export function createStaticTextModel(lines: string[]): tea.IModel {
     return {
         ...createEmptyModel(),
         render: () => ({
@@ -86,7 +86,7 @@ export function createStaticTextModel(lines: string[]): IModel {
     }
 }
 
-export function createDynamicTextModel(linesGetter: () => string[]): IModel {
+export function createDynamicTextModel(linesGetter: () => string[]): tea.IModel {
     return {
         ...createEmptyModel(),
         render: () => ({
@@ -96,10 +96,10 @@ export function createDynamicTextModel(linesGetter: () => string[]): IModel {
     }
 }
 
-export function createListModel(title: string, options: string[]): IModel {
+export function createListModel(title: string, options: string[]): tea.IModel {
     let selectedIndex = 0
 
-    function onKeypress(keypress: ReadlineKeypress) {
+    function onKeypress(keypress: tea.ReadlineKeypress) {
         const isUp = keypress.key.name === "up" || keypress.text === "k"
         const isDown = keypress.key.name === "down" || keypress.text === "j"
 
@@ -109,7 +109,7 @@ export function createListModel(title: string, options: string[]): IModel {
             selectedIndex = Math.min(options.length - 1, selectedIndex + 1)
     }
 
-    function render(): RenderResult {
+    function render(): tea.RenderResult {
         const lines = [
             title,
             "",
@@ -129,14 +129,14 @@ export function createListModel(title: string, options: string[]): IModel {
 }
 
 // example dynamic model
-export function createExampleInputModel(): IModel {
+export function createExampleInputModel(): tea.IModel {
     const inputPrefix = "Type: "
     let text = ""
     let cursorIndex = 0
     let lastInput = "waiting input..."
     let ownsCursor = false
 
-    function onKeypress(keypress: ReadlineKeypress) {
+    function onKeypress(keypress: tea.ReadlineKeypress) {
         // console.log(keypress)
 
         // hard guard for backspace, weirdly keypress.text.length == 1
@@ -174,7 +174,7 @@ export function createExampleInputModel(): IModel {
         }
     }
 
-    function render(): RenderResult {
+    function render(): tea.RenderResult {
         const lines = [
             inputPrefix + text,
             lastInput,
@@ -198,11 +198,11 @@ export function createExampleInputModel(): IModel {
     }
 }
 
-export function createExamplePropsGetterOnlyModel(countGetter: () => number): IModel {
+export function createExamplePropsGetterOnlyModel(countGetter: () => number): tea.IModel {
     return createDynamicTextModel(() => ["count: " + countGetter() + " (this is using shared state)"])
 }
 
-export function createExamplePropsSetterModel(countGetter: () => number, countSetter: (count: number) => void): IModel {
+export function createExamplePropsSetterModel(countGetter: () => number, countSetter: (count: number) => void): tea.IModel {
     return {
         ...createEmptyModel(),
         onKeypress: () => countSetter(countGetter() + 1),
