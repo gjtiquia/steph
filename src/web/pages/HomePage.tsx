@@ -19,20 +19,34 @@ export function HomePage() {
                 <title>steph</title>
             </head>
             <body class="bg-stone-900 text-stone-50 font-fira">
-                <p class="min-h-[1.5rem]"></p>
-                <p>steph</p>
-                <p class="min-h-[1.5rem]"></p>
+                <section>
+                    <p class="min-h-[1.5rem]"></p>
+                    <h1>steph</h1>
+                    <p class="min-h-[1.5rem]"></p>
+                </section>
 
-                <div class="flex gap-2">
-                    <label for="room">Type:</label>
-                    <span>
-                        <input
-                            type="text"
-                            id="room"
-                            class="border-1 border-stone-50/25 rounded-sm px-1 flex-grow"
-                        />
-                    </span>
-                </div>
+                <section>
+                    <div class="flex gap-2">
+                        <label for="room">Type:</label>
+                        <span>
+                            <input
+                                type="text"
+                                id="room"
+                                class="border-1 border-stone-50/25 rounded-sm px-1 flex-grow"
+                            />
+                        </span>
+                    </div>
+                </section>
+
+                <section>
+                    <p>Text:</p>
+                    <p>Count: 0 (this is using shared state)</p>
+                    <p>Count: 0 (press any key to increment)</p>
+                </section>
+
+                <section>
+                    <h2>this is a list with options</h2>
+                </section>
             </body>
         </html>
     );
