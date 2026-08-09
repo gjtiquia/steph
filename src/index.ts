@@ -2,16 +2,21 @@ import { parseArgs } from "util";
 import * as tui from "./tui"
 import * as web from "./web"
 import * as utils from "./utils"
-import { tryCatchSync } from "./lib/try-catch";
+import { toError, tryCatchSync } from "./lib/try-catch";
 
 main()
 
 function main() {
     mainAsync()
-        .then((error) => {
-            if (error !== null) {
-                console.error(`Error caught gracefully: ${error.message}`)
-                console.error(error)
+        .then((errors) => {
+            if (errors !== null) {
+                for (let i = 0; i < errors.length; i++) {
+                    const error = errors[i]
+                    if (!error) continue
+
+                    console.error(`Error ${i + 1}/${errors.length} caught gracefully: ${error.message}`)
+                    console.error(error)
+                }
                 process.exit(1)
                 return;
             }
@@ -19,14 +24,15 @@ function main() {
             // we need to call it ourselves cuz the TUI does some process overrides
             process.exit(0)
         })
-        .catch((error) => {
+        .catch((e) => {
+            const error = toError(e)
             console.error(`Unexpected Exception caught!: ${error.message}`)
             console.error(error)
             process.exit(1)
         })
 }
 
-async function mainAsync(): Promise<Error | null> {
+async function mainAsync(): Promise<Error[] | null> {
     // TODO : can consider improving this with Commander.js
     // https://github.com/tj/commander.js/
     // https://betterstack.com/community/guides/scaling-nodejs/commander-explained/ 
@@ -42,7 +48,7 @@ async function mainAsync(): Promise<Error | null> {
     }));
 
     if (parseArgsResult.error !== null) {
-        return parseArgsResult.error
+        return [parseArgsResult.error]
     }
 
     const { values, positionals } = parseArgsResult.data
@@ -67,12 +73,12 @@ async function mainAsync(): Promise<Error | null> {
         // PORT takes precedence over --port
         if (envPort !== undefined) {
             const { ok, parsedInt } = utils.tryParseInt(envPort)
-            if (!ok) return new Error(`web command: received PORT env variable but unable to parse ${envPort}!`)
+            if (!ok) return [new Error(`web command: received PORT env variable but unable to parse ${envPort}!`)]
             port = parsedInt
         }
         else if (argPort !== undefined) {
             const { ok, parsedInt } = utils.tryParseInt(argPort)
-            if (!ok) return new Error(`web command: received --port arg but unable to parse ${argPort}!`)
+            if (!ok) return [new Error(`web command: received --port arg but unable to parse ${argPort}!`)]
             port = parsedInt
         }
 

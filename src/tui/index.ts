@@ -29,7 +29,7 @@ export type Cursor = {
 
 const model: IModel = createRootModel()
 
-export async function mainAsync(): Promise<Error | null> {
+export async function mainAsync(): Promise<Error[] | null> {
     clearUI()
     drawUI()
 
@@ -37,11 +37,12 @@ export async function mainAsync(): Promise<Error | null> {
         // isDebugMode: true,
         callProcessExit: false, // root main owns process exit
         onKeypress: handleKeypress,
+        onCleanup: onBeforeCleanup,
     })
 
-    const { ok, error } = await t.tryRunAsync()
+    const { ok, errors } = await t.tryRunAsync()
     if (!ok)
-        return error
+        return errors
 
     return null
 }
@@ -50,6 +51,16 @@ function handleKeypress(keypress: t.ReadlineKeypress) {
     clearUI() // clear first so that... we can cheat using console.log onKeypress
     model.onKeypress(keypress)
     drawUI();
+}
+
+function onBeforeCleanup() {
+    // final render
+    clearUI()
+    const render = drawUI()
+
+    // move cursor to the last row
+    // because, it may clear everything below wherever the cursor is at right now
+    t.moveCursorTo(render.lines.length, 0)
 }
 
 function clearUI() {
@@ -71,4 +82,6 @@ function drawUI() {
     else {
         t.hideCursor()
     }
+
+    return result
 }

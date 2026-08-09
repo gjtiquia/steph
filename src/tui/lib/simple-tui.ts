@@ -10,7 +10,8 @@ type Options = {
     clearOnStart: boolean,
     clearOnExit: boolean,
     callProcessExit: boolean,
-    onKeypress: (keypress: ReadlineKeypress) => void
+    onKeypress: (keypress: ReadlineKeypress) => void,
+    onCleanup: () => void,
 }
 
 export function createDefaultOptions(): Options {
@@ -19,7 +20,8 @@ export function createDefaultOptions(): Options {
         clearOnStart: false, // false by default, reduces WTF/min, prefer explicit intentional behavior than magic
         clearOnExit: false, // false by default, reduces WTF/min, prefer explicit intentional behavior than magic
         callProcessExit: true, // true by default, reduces WTF/min, so that the program exits when the user presses Ctrl-C, unless the user wants to handle it themselves
-        onKeypress: () => { }
+        onKeypress: () => { },
+        onCleanup: () => { },
     }
 }
 
@@ -34,18 +36,18 @@ export function setup(options: Partial<Options> = {}) {
 
 let hasStartedRunningSuccessfully = false
 
-type Success = { readonly ok: true, readonly error: undefined }
-type Failure = { readonly ok: false, readonly error: Error }
+type Success = { readonly ok: true, readonly errors: undefined }
+type Failure = { readonly ok: false, readonly errors: Error[] }
 type Result = Success | Failure
 
 let resolveRunPromise: (result: Result) => void = (result) => { }
 
 export async function tryRunAsync(): Promise<Result> {
     if (!process.stdin.isTTY) // might be undefined, so safer to check for falsy value, despite the type being a boolean... test by piping into the program
-        return { ok: false, error: new Error("stdin is not a TTY") } as const
+        return { ok: false, errors: [new Error("stdin is not a TTY")] } as const
 
     if (hasStartedRunningSuccessfully)
-        return { ok: false, error: new Error("TUI is already running") } as const
+        return { ok: false, errors: [new Error("TUI is already running")] } as const
 
     debug("tryRunAsync: running...")
 
@@ -91,14 +93,12 @@ function onKeypress(text: string | undefined, key: readline.Key) {
         return;
     }
 
-    // try/catch wrap cuz you never know what the user will do in their onKeypress callback, and we want to make sure we clean up properly if they throw an error
+    // try/catch wrap cuz you never know what the user will do in their callback, and we want to make sure we clean up properly if they throw an error
     try {
         globalOptions.onKeypress({ text, key });
-    } catch (error) {
-        if (error instanceof Error)
-            requestCleanupError(error)
-        else
-            requestCleanupError(new Error(String(error)))
+    } catch (e) {
+        const error = e instanceof Error ? e : new Error(String(e))
+        requestCleanupError([error])
     }
 }
 
@@ -131,11 +131,11 @@ function requestCleanupSuccessAndExit() {
 }
 
 function requestCleanupSuccess() {
-    requestCleanup({ ok: true, error: undefined })
+    requestCleanup({ ok: true, errors: undefined })
 }
 
-function requestCleanupError(error: Error) {
-    requestCleanup({ ok: false, error: error })
+function requestCleanupError(errors: Error[]) {
+    requestCleanup({ ok: false, errors: errors })
 }
 
 let hasAttemptedCleanup = false
@@ -149,6 +149,23 @@ function requestCleanup(result: Result) {
     hasAttemptedCleanup = true
 
     debug("cleanup: running...")
+
+    // try/catch wrap cuz you never know what the user will do in their callback, and we want to make sure we clean up properly if they throw an error
+    try {
+        // eg. for setting the cursor position, as the lib has no knowledge of where the last line is, and might accidentally clear everything below the cursor
+        globalOptions.onCleanup()
+    }
+    catch (e) {
+        const error = e instanceof Error ? e : new Error(String(e))
+        if (result.ok) {
+            // override the result
+            result = { ok: false, errors: [error] }
+        }
+        else {
+            // compound the result
+            result = { ok: false, errors: [...result.errors, error]}
+        }
+    }
 
     showCursor()
 
