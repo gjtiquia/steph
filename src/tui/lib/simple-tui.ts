@@ -2,17 +2,17 @@
 // seems reusable enough to be a simple TUI lib
 
 // works in Bun: https://bun.com/reference/node/readline
-import readline from "node:readline"
+import readline from "node:readline";
 
 // keep this flat so defaults can be merged with a simple spread operator
 type Options = {
-    isDebugMode: boolean,
-    clearOnStart: boolean,
-    clearOnExit: boolean,
-    callProcessExit: boolean,
-    onKeypress: (keypress: ReadlineKeypress) => void,
-    onCleanup: () => void,
-}
+    isDebugMode: boolean;
+    clearOnStart: boolean;
+    clearOnExit: boolean;
+    callProcessExit: boolean;
+    onKeypress: (keypress: ReadlineKeypress) => void;
+    onCleanup: () => void;
+};
 
 export function createDefaultOptions(): Options {
     return {
@@ -20,72 +20,78 @@ export function createDefaultOptions(): Options {
         clearOnStart: false, // false by default, reduces WTF/min, prefer explicit intentional behavior than magic
         clearOnExit: false, // false by default, reduces WTF/min, prefer explicit intentional behavior than magic
         callProcessExit: true, // true by default, reduces WTF/min, so that the program exits when the user presses Ctrl-C, unless the user wants to handle it themselves
-        onKeypress: () => { },
-        onCleanup: () => { },
-    }
+        onKeypress: () => {},
+        onCleanup: () => {},
+    };
 }
 
-let globalOptions: Options = createDefaultOptions()
+let globalOptions: Options = createDefaultOptions();
 
 export function setup(options: Partial<Options> = {}) {
     globalOptions = {
         ...createDefaultOptions(),
-        ...options
-    }
+        ...options,
+    };
 }
 
-let hasStartedRunningSuccessfully = false
+let hasStartedRunningSuccessfully = false;
 
-type Success = { readonly ok: true, readonly errors: undefined }
-type Failure = { readonly ok: false, readonly errors: Error[] }
-type Result = Success | Failure
+type Success = { readonly ok: true; readonly errors: undefined };
+type Failure = { readonly ok: false; readonly errors: Error[] };
+type Result = Success | Failure;
 
-let resolveRunPromise: (result: Result) => void = (result) => { }
+let resolveRunPromise: (result: Result) => void = (result) => {};
 
 export async function tryRunAsync(): Promise<Result> {
-    if (!process.stdin.isTTY) // might be undefined, so safer to check for falsy value, despite the type being a boolean... test by piping into the program
-        return { ok: false, errors: [new Error("stdin is not a TTY")] } as const
+    if (!process.stdin.isTTY)
+        // might be undefined, so safer to check for falsy value, despite the type being a boolean... test by piping into the program
+        return {
+            ok: false,
+            errors: [new Error("stdin is not a TTY")],
+        } as const;
 
     if (hasStartedRunningSuccessfully)
-        return { ok: false, errors: [new Error("TUI is already running")] } as const
+        return {
+            ok: false,
+            errors: [new Error("TUI is already running")],
+        } as const;
 
-    debug("tryRunAsync: running...")
+    debug("tryRunAsync: running...");
 
     const runPromise = new Promise<Result>((resolve) => {
-        resolveRunPromise = resolve
-    })
+        resolveRunPromise = resolve;
+    });
 
     // allows process.stdin to emit "keypress" events, which is necessary for reading special keys like arrow keys
-    readline.emitKeypressEvents(process.stdin)
+    readline.emitKeypressEvents(process.stdin);
 
-    process.stdin.setRawMode(true)
+    process.stdin.setRawMode(true);
     process.stdin.resume(); // necessary or else "keypress" event wont fire
-    process.stdin.setEncoding("utf8") // so can do string comparison on received keypresses
+    process.stdin.setEncoding("utf8"); // so can do string comparison on received keypresses
 
     // input listeners
-    process.stdin.on("keypress", onKeypress)
+    process.stdin.on("keypress", onKeypress);
 
     // cleanup listeners
     process.on("exit", requestCleanupSuccess); // Regular exit on program end
     process.on("SIGINT", requestCleanupSuccessAndExit); // Ctrl-C, does not exit by default, need to manually exit
     process.on("SIGTERM", requestCleanupSuccessAndExit); // Terminated by terminal
 
-    if (globalOptions.clearOnStart)
-        console.clear();
+    if (globalOptions.clearOnStart) console.clear();
 
-    hasStartedRunningSuccessfully = true
+    hasStartedRunningSuccessfully = true;
 
-    debug("tryRunAsync: waiting exit request...")
-    const result = await runPromise
+    debug("tryRunAsync: waiting exit request...");
+    const result = await runPromise;
 
-    debug("tryRunAsync: exiting...")
-    return result
+    debug("tryRunAsync: exiting...");
+    return result;
 }
 
 export type ReadlineKeypress = {
-    text: string | undefined,
-    key: readline.Key
-}
+    text: string | undefined;
+    key: readline.Key;
+};
 
 function onKeypress(text: string | undefined, key: readline.Key) {
     if (key.ctrl && key.name === "c") {
@@ -97,21 +103,21 @@ function onKeypress(text: string | undefined, key: readline.Key) {
     try {
         globalOptions.onKeypress({ text, key });
     } catch (e) {
-        const error = e instanceof Error ? e : new Error(String(e))
-        requestCleanupError([error])
+        const error = e instanceof Error ? e : new Error(String(e));
+        requestCleanupError([error]);
     }
 }
 
 export function hideCursor() {
-    process.stdout.write("\u001b[?25l")
+    process.stdout.write("\u001b[?25l");
 }
 
 export function showCursor() {
-    process.stdout.write("\u001b[?25h")
+    process.stdout.write("\u001b[?25h");
 }
 
 export function moveCursorTo(row: number, col: number) {
-    process.stdout.write(`\u001b[${row + 1};${col + 1}H`)
+    process.stdout.write(`\u001b[${row + 1};${col + 1}H`);
 }
 
 // exported so that users can call it themselves if they want to handle process exit themselves
@@ -120,67 +126,61 @@ export function requestExit() {
 }
 
 function requestCleanupSuccessAndExit() {
-    debug("cleanupAndExit: running...")
+    debug("cleanupAndExit: running...");
 
     requestCleanupSuccess();
 
-    debug("cleanupAndExit: exiting...")
+    debug("cleanupAndExit: exiting...");
 
-    if (globalOptions.callProcessExit)
-        process.exit(0);
+    if (globalOptions.callProcessExit) process.exit(0);
 }
 
 function requestCleanupSuccess() {
-    requestCleanup({ ok: true, errors: undefined })
+    requestCleanup({ ok: true, errors: undefined });
 }
 
 function requestCleanupError(errors: Error[]) {
-    requestCleanup({ ok: false, errors: errors })
+    requestCleanup({ ok: false, errors: errors });
 }
 
-let hasAttemptedCleanup = false
+let hasAttemptedCleanup = false;
 
 function requestCleanup(result: Result) {
     if (hasAttemptedCleanup) {
-        debug("cleanup: already attempted, skipping...")
-        return
+        debug("cleanup: already attempted, skipping...");
+        return;
     }
 
-    hasAttemptedCleanup = true
+    hasAttemptedCleanup = true;
 
-    debug("cleanup: running...")
+    debug("cleanup: running...");
 
     // try/catch wrap cuz you never know what the user will do in their callback, and we want to make sure we clean up properly if they throw an error
     try {
         // eg. for setting the cursor position, as the lib has no knowledge of where the last line is, and might accidentally clear everything below the cursor
-        globalOptions.onCleanup()
-    }
-    catch (e) {
-        const error = e instanceof Error ? e : new Error(String(e))
+        globalOptions.onCleanup();
+    } catch (e) {
+        const error = e instanceof Error ? e : new Error(String(e));
         if (result.ok) {
             // override the result
-            result = { ok: false, errors: [error] }
-        }
-        else {
+            result = { ok: false, errors: [error] };
+        } else {
             // compound the result
-            result = { ok: false, errors: [...result.errors, error]}
+            result = { ok: false, errors: [...result.errors, error] };
         }
     }
 
-    showCursor()
+    showCursor();
 
-    if (process.stdin.isTTY)
-        process.stdin.setRawMode(false)
+    if (process.stdin.isTTY) process.stdin.setRawMode(false);
 
-    if (globalOptions.clearOnExit)
-        console.clear();
+    if (globalOptions.clearOnExit) console.clear();
 
-    resolveRunPromise(result)
+    resolveRunPromise(result);
 
-    debug("cleanup: success!")
+    debug("cleanup: success!");
 }
 
 function debug(msg: string) {
-    if (globalOptions.isDebugMode)
-        console.log("[simple-tui]", msg)
+    if (globalOptions.isDebugMode) console.log("[simple-tui]", msg);
 }

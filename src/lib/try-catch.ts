@@ -28,9 +28,7 @@ export async function tryCatchAsync<T, E = Error>(
 }
 
 // (GJ): Synchronous version of the wrapper function
-export function tryCatchSync<T, E = Error>(
-    fn: () => T,
-): Result<T, E> {
+export function tryCatchSync<T, E = Error>(fn: () => T): Result<T, E> {
     try {
         const data = fn();
         return { data, error: null };
@@ -41,8 +39,7 @@ export function tryCatchSync<T, E = Error>(
 
 // (GJ) because sometimes ints or strings are thrown instead of Error objects, this function converts them to Error objects
 export function toError(error: unknown): Error {
-    if (error instanceof Error)
-        return error
+    if (error instanceof Error) return error;
 
-    return new Error(String(error))
+    return new Error(String(error));
 }
