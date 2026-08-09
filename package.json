@@ -4,12 +4,16 @@
     "type": "module",
     "private": true,
     "scripts": {
-        "start": "tsc --noEmit && bun run src/index.ts",
-        "build:tailwind": "bun run tailwindcss-cli -i ./src/web/input.css -o ./src/web/public/styles.css",
-        "tailwindcss-cli": "bun ./node_modules/@tailwindcss/cli/dist/index.mjs"
+        "start": "bun run build && tsc --noEmit && bun run src/index.ts",
+        "dev:web": "concurrently 'bun run dev:tui web' 'bun run dev:tailwind'",
+        "dev:tui": "tsc --noEmit && bun run --watch src/index.ts",
+        "dev:tailwind": "tailwindcss -i ./src/web/input.css -o ./src/web/public/styles.css --watch",
+        "build": "bun run build:tailwind",
+        "build:tailwind": "tailwindcss -i ./src/web/input.css -o ./src/web/public/styles.css"
     },
     "devDependencies": {
         "@types/bun": "^1.3.14",
+        "concurrently": "^10.0.4",
         "prettier": "3.9.6"
     },
     "peerDependencies": {
