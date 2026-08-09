@@ -7,18 +7,13 @@ import { Elysia, status } from "elysia";
 export async function mainAsync(port: number): Promise<Error[] | null> {
     const app = new Elysia()
         .onError(({ error, path }) => {
-
             // TODO : temporarily ignored to reduce noise
-            if (path.includes("favicon"))
-                return;
+            if (path.includes("favicon")) return;
 
-            console.error(path)
+            console.error(path);
             console.error(error);
         })
         .get("/", () => "Hello Elysia")
-        .get("/error", () => {
-            throw new Error("forced elysia error");
-        })
         .listen(port);
 
     console.log(
@@ -28,4 +23,3 @@ export async function mainAsync(port: number): Promise<Error[] | null> {
     // server process now owns process exit and error logging
     return null;
 }
-
