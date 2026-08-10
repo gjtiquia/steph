@@ -1,10 +1,22 @@
 import { printErrors } from "../lib/try-catch";
 import * as tea from "./lib/lemontea";
-import { createRootModel } from "./model";
+import { init, update } from "../shared";
+import { fromTuiKeys } from "./fromTuiKeys";
+import { viewTui } from "./viewTui";
 
 export async function mainAsync(): Promise<Error[] | null> {
-    const model = createRootModel();
-    const errors = await tea.runAsync(model);
+    let model = init();
+    const teaModel: tea.IModel = {
+        onKeypress(keypress) {
+            for (const msg of fromTuiKeys(keypress, model)) {
+                model = update(msg, model).model;
+            }
+        },
+        render() {
+            return viewTui(model);
+        },
+    };
+    const errors = await tea.runAsync(teaModel);
 
     if (errors !== null) {
         console.error("Errors caught gracefully");

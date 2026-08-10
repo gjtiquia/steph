@@ -2,14 +2,10 @@
 // intentionally decoupled from simple-tui
 
 import * as t from "./simple-tui";
-import * as readline from "node:readline";
 
 // TODO : eventually we'll need to handle terminal size and resizing
 
-export type ReadlineKeypress = {
-    text: string | undefined;
-    key: readline.Key;
-};
+export type ReadlineKeypress = t.ReadlineKeypress;
 
 export interface IModel {
     onKeypress(keypress: ReadlineKeypress): void;
@@ -26,19 +22,15 @@ export type Cursor = {
     col: number;
 };
 
-let model: IModel | undefined = undefined;
-
 export async function runAsync(m: IModel): Promise<Error[] | null> {
-    model = m;
-
     clearUI();
-    drawUI();
+    drawUI(m);
 
     t.setup({
         // isDebugMode: true,
         callProcessExit: false, // root main owns process exit to handle all errors gracefully
-        onKeypress: handleKeypress,
-        onCleanup: onBeforeCleanup,
+        onKeypress: (kp) => handleKeypress(kp, m),
+        onCleanup: () => onBeforeCleanup(m),
     });
 
     const { ok, errors } = await t.tryRunAsync();
@@ -47,16 +39,16 @@ export async function runAsync(m: IModel): Promise<Error[] | null> {
     return null;
 }
 
-function handleKeypress(keypress: t.ReadlineKeypress) {
+function handleKeypress(keypress: t.ReadlineKeypress, m: IModel) {
     clearUI(); // clear first so that... we can cheat using console.log onKeypress
-    model?.onKeypress(keypress);
-    drawUI();
+    m.onKeypress(keypress);
+    drawUI(m);
 }
 
-function onBeforeCleanup() {
+function onBeforeCleanup(m: IModel) {
     // final render
     clearUI();
-    const render = drawUI();
+    const render = drawUI(m);
     if (render) {
         // move cursor to the last row
         // because, it may clear everything below wherever the cursor is at right now
@@ -68,10 +60,8 @@ function clearUI() {
     console.clear();
 }
 
-function drawUI() {
-    if (!model) return;
-
-    const result = model.render();
+function drawUI(m: IModel) {
+    const result = m.render();
 
     for (const line of result.lines) {
         console.log(line);

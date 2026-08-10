@@ -1,29 +1,22 @@
-// TUI: global state
-let count = 0;
+import { fromKeydown, fromClick } from "./fromDom";
+import { createApp } from "./patch";
 
-main();
+const app = createApp();
+app.mount(document.getElementById("root")!);
 
-function main() {
-    // console.log("Hello World!");
+document.addEventListener("keydown", (e) => app.dispatch(fromKeydown(e)));
+document.addEventListener("click", (e) => app.dispatch(fromClick(e)));
 
-    // TUI: on keypress
-    document.body.addEventListener("keydown", onKeydown);
-}
-
-function onKeydown(e: KeyboardEvent) {
-    console.log(e);
-
-    // process state
-    count++;
-
-    // render
-    const keyElements = document.querySelectorAll("[data-key]");
-    for (const keyElement of keyElements) {
-        keyElement.textContent = `Key: ${e.key}`;
-    }
-
-    const countElements = document.querySelectorAll("[data-count]");
-    for (const countElement of countElements) {
-        countElement.textContent = `${count}`;
-    }
+const input = document.querySelector<HTMLInputElement>("[data-input]")!;
+if (input) {
+    input.addEventListener("input", () =>
+        app.dispatch([
+            { type: "ValueChanged", value: input.value, cursor: input.selectionStart ?? 0 },
+        ]),
+    );
+    input.addEventListener("select", () =>
+        app.dispatch([
+            { type: "ValueChanged", value: input.value, cursor: input.selectionStart ?? 0 },
+        ]),
+    );
 }
