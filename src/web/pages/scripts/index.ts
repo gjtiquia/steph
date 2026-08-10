@@ -1,7 +1,8 @@
+import { homeScreen } from "../../../shared";
 import { fromKeydown, fromClick } from "./fromDom";
 import { createApp } from "./patch";
 
-const app = createApp();
+const app = createApp(homeScreen);
 app.mount(document.getElementById("root")!);
 
 document.addEventListener("keydown", (e) => app.dispatch(fromKeydown(e)));

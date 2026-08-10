@@ -1,36 +1,3 @@
-// src/web/pages/scripts/fromDom.ts
-var KEY_MAP = {
-  ArrowUp: "up",
-  ArrowDown: "down",
-  ArrowLeft: "left",
-  ArrowRight: "right",
-  Enter: "return",
-  " ": "space",
-  Backspace: "backspace",
-  Tab: "tab",
-  Escape: "escape"
-};
-function fromKeydown(e) {
-  if (e.key === "Shift" || e.key === "Control" || e.key === "Alt" || e.key === "Meta") {
-    return [];
-  }
-  const name = KEY_MAP[e.key] ?? e.key;
-  const text = name === "space" ? " " : name.length === 1 ? name : undefined;
-  return [{ type: "Keypress", name, text }];
-}
-function fromClick(e) {
-  if (!(e.target instanceof Element))
-    return [];
-  const el = e.target.closest("[data-index]");
-  if (!el)
-    return [];
-  const indexAttr = el.getAttribute("data-index");
-  if (indexAttr === null)
-    return [];
-  const index = Number(indexAttr);
-  return [{ type: "Select", index }];
-}
-
 // src/shared/init.ts
 function init() {
   return {
@@ -221,6 +188,39 @@ function composeUpdate(msg, model, widgets) {
 function update(msg, model) {
   return composeUpdate(msg, model, homeScreen);
 }
+// src/web/pages/scripts/fromDom.ts
+var KEY_MAP = {
+  ArrowUp: "up",
+  ArrowDown: "down",
+  ArrowLeft: "left",
+  ArrowRight: "right",
+  Enter: "return",
+  " ": "space",
+  Backspace: "backspace",
+  Tab: "tab",
+  Escape: "escape"
+};
+function fromKeydown(e) {
+  if (e.key === "Shift" || e.key === "Control" || e.key === "Alt" || e.key === "Meta") {
+    return [];
+  }
+  const name = KEY_MAP[e.key] ?? e.key;
+  const text = name === "space" ? " " : name.length === 1 ? name : undefined;
+  return [{ type: "Keypress", name, text }];
+}
+function fromClick(e) {
+  if (!(e.target instanceof Element))
+    return [];
+  const el = e.target.closest("[data-index]");
+  if (!el)
+    return [];
+  const indexAttr = el.getAttribute("data-index");
+  if (indexAttr === null)
+    return [];
+  const index = Number(indexAttr);
+  return [{ type: "Select", index }];
+}
+
 // src/web/pages/scripts/patch.ts
 var widgetViews = {
   "static-text": (slice, model) => staticText.view(slice, model),
@@ -230,66 +230,81 @@ var widgetViews = {
   "count-setter": (slice, model) => countSetter.view(slice, model),
   list: (slice, model) => list.view(slice, model)
 };
+var templateCache = {};
+function cloneTemplate(id) {
+  const template = templateCache[id] ??= document.querySelector(`#${id}`);
+  return template.content.firstElementChild.cloneNode(true);
+}
 function renderNode(node) {
   switch (node.type) {
     case "text": {
-      const p = document.createElement("p");
-      p.className = "min-h-[1.5rem] whitespace-pre";
-      p.textContent = node.text;
-      return p;
+      const el = cloneTemplate("tpl-text");
+      el.textContent = node.text;
+      return el;
     }
     case "section": {
-      const div = document.createElement("div");
-      div.className = "flex flex-col gap-1";
+      const el = cloneTemplate("tpl-section");
+      const container = el.querySelector("[data-children]") ?? el;
       for (const child of node.children) {
-        div.appendChild(renderNode(child));
+        container.appendChild(renderNode(child));
       }
-      return div;
+      return el;
     }
     case "list": {
-      const container = document.createElement("div");
-      container.className = "flex flex-col gap-1";
-      const title = document.createElement("h2");
-      title.className = "text-lg";
-      title.textContent = node.title;
-      container.appendChild(title);
-      const ul = document.createElement("ul");
-      ul.className = "flex flex-col";
+      const el = cloneTemplate("tpl-list");
+      el.querySelector("[data-title]").textContent = node.title;
+      const ul = el.querySelector("[data-items]");
       node.options.forEach((option, index) => {
-        const li = document.createElement("li");
+        const li = cloneTemplate("tpl-list-item");
         const isSelected = index === node.selectedIndex;
-        li.className = "cursor-pointer px-1 rounded-sm " + (isSelected ? "text-stone-900 bg-stone-100" : "text-stone-50");
+        li.className += " " + (isSelected ? "text-stone-900 bg-stone-100" : "text-stone-50");
         li.setAttribute("data-index", String(index));
         li.textContent = `${isSelected ? ">" : " "} ${index + 1}) ${option}`;
         ul.appendChild(li);
       });
-      container.appendChild(ul);
-      return container;
+      return el;
     }
     case "input":
       throw new Error("input nodes are rendered natively on web");
   }
 }
-function renderWidgetInto(container, key, model) {
+function renderWidgetInto(key, model, containers) {
   if (key === "input")
     return;
+  const container = containers.get(key);
   const view = widgetViews[key];
   const field = modelFieldFor[key];
-  if (!view || !field)
+  if (!container || !view || !field)
     return;
-  const slice = model[field];
-  const tree = view(slice, model);
-  container.replaceChildren(renderNode(tree));
+  container.replaceChildren(renderNode(view(model[field], model)));
 }
-function createApp() {
+function createApp(screen) {
   let model = init();
-  function mount(_root) {
-    for (const key of Object.keys(widgetViews)) {
-      if (key === "input")
-        continue;
-      const container = document.querySelector(`[data-widget="${key}"]`);
-      if (container)
-        renderWidgetInto(container, key, model);
+  const containers = new Map;
+  function mountInputWidget() {
+    const container = containers.get("input");
+    if (!container)
+      return;
+    const el = cloneTemplate("tpl-widget-input");
+    const tree = input.view(model.input, model);
+    const prefix = tree.type === "input" ? tree.prefix : "";
+    const label = el.querySelector("[data-prefix]");
+    if (label)
+      label.textContent = prefix;
+    container.appendChild(el);
+  }
+  function mount(root) {
+    for (const widget of screen) {
+      const container = document.createElement("div");
+      container.setAttribute("data-widget", widget.key);
+      root.appendChild(container);
+      containers.set(widget.key, container);
+    }
+    for (const widget of screen) {
+      if (widget.key === "input")
+        mountInputWidget();
+      else
+        renderWidgetInto(widget.key, model, containers);
     }
   }
   function dispatch(msgs) {
@@ -299,9 +314,7 @@ function createApp() {
       for (const key of result.changed) {
         if (key === "input")
           continue;
-        const container = document.querySelector(`[data-widget="${key}"]`);
-        if (container)
-          renderWidgetInto(container, key, model);
+        renderWidgetInto(key, model, containers);
       }
     }
   }
@@ -309,7 +322,7 @@ function createApp() {
 }
 
 // src/web/pages/scripts/index.ts
-var app = createApp();
+var app = createApp(homeScreen);
 app.mount(document.getElementById("root"));
 document.addEventListener("keydown", (e) => app.dispatch(fromKeydown(e)));
 document.addEventListener("click", (e) => app.dispatch(fromClick(e)));

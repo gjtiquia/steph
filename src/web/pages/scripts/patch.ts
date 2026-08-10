@@ -13,6 +13,7 @@ import type {
     Msg,
     Model,
     Tree,
+    Widget,
     StaticTextSlice,
     InputSlice,
     KeyDisplaySlice,
@@ -31,75 +32,98 @@ const widgetViews: Record<string, (slice: unknown, model: Model) => Tree> = {
     list: (slice, model) => list.view(slice as ListSlice, model),
 };
 
+const templateCache: Record<string, HTMLTemplateElement> = {};
+
+function cloneTemplate(id: string): HTMLElement {
+    const template =
+        (templateCache[id] ??= document.querySelector<HTMLTemplateElement>(
+            `#${id}`,
+        )!);
+    return template.content.firstElementChild!.cloneNode(true) as HTMLElement;
+}
+
 export function renderNode(node: Tree): HTMLElement {
     switch (node.type) {
         case "text": {
-            const p = document.createElement("p");
-            p.className = "min-h-[1.5rem] whitespace-pre";
-            p.textContent = node.text;
-            return p;
+            const el = cloneTemplate("tpl-text");
+            el.textContent = node.text;
+            return el;
         }
         case "section": {
-            const div = document.createElement("div");
-            div.className = "flex flex-col gap-1";
+            const el = cloneTemplate("tpl-section");
+            const container =
+                el.querySelector<HTMLElement>("[data-children]") ?? el;
             for (const child of node.children) {
-                div.appendChild(renderNode(child));
+                container.appendChild(renderNode(child));
             }
-            return div;
+            return el;
         }
         case "list": {
-            const container = document.createElement("div");
-            container.className = "flex flex-col gap-1";
-
-            const title = document.createElement("h2");
-            title.className = "text-lg";
-            title.textContent = node.title;
-            container.appendChild(title);
-
-            const ul = document.createElement("ul");
-            ul.className = "flex flex-col";
+            const el = cloneTemplate("tpl-list");
+            el.querySelector("[data-title]")!.textContent = node.title;
+            const ul = el.querySelector<HTMLElement>("[data-items]")!;
             node.options.forEach((option, index) => {
-                const li = document.createElement("li");
+                const li = cloneTemplate("tpl-list-item");
                 const isSelected = index === node.selectedIndex;
-                li.className =
-                    "cursor-pointer px-1 rounded-sm " +
+                li.className +=
+                    " " +
                     (isSelected ? "text-stone-900 bg-stone-100" : "text-stone-50");
                 li.setAttribute("data-index", String(index));
                 li.textContent = `${isSelected ? ">" : " "} ${index + 1}) ${option}`;
                 ul.appendChild(li);
             });
-            container.appendChild(ul);
-
-            return container;
+            return el;
         }
         case "input":
             throw new Error("input nodes are rendered natively on web");
     }
 }
 
-function renderWidgetInto(container: HTMLElement, key: string, model: Model): void {
+function renderWidgetInto(
+    key: string,
+    model: Model,
+    containers: Map<string, HTMLElement>,
+): void {
     if (key === "input") return;
 
+    const container = containers.get(key);
     const view = widgetViews[key];
     const field = modelFieldFor[key];
-    if (!view || !field) return;
+    if (!container || !view || !field) return;
 
-    const slice = model[field];
-    const tree = view(slice, model);
-    container.replaceChildren(renderNode(tree));
+    container.replaceChildren(renderNode(view(model[field], model)));
 }
 
-export function createApp(): {
+export function createApp(screen: Widget<unknown>[]): {
     mount(root: HTMLElement): void;
     dispatch(msgs: Msg[]): void;
 } {
     let model: Model = init();
+    const containers = new Map<string, HTMLElement>();
 
-    function mount(_root: HTMLElement): void {
-        for (const key of Object.keys(widgetViews)) {
-            if (key === "input") continue;
-            const container = document.querySelector(`[data-widget="${key}"]`);
-            if (container) renderWidgetInto(container as HTMLElement, key, model);
+    function mountInputWidget(): void {
+        const container = containers.get("input");
+        if (!container) return;
+
+        const el = cloneTemplate("tpl-widget-input");
+        const tree = input.view(model.input, model);
+        const prefix = tree.type === "input" ? tree.prefix : "";
+        const label = el.querySelector<HTMLElement>("[data-prefix]");
+        if (label) label.textContent = prefix;
+        container.appendChild(el);
+    }
+
+    function mount(root: HTMLElement): void {
+        for (const widget of screen) {
+            const container = document.createElement("div");
+            container.setAttribute("data-widget", widget.key);
+            root.appendChild(container);
+            containers.set(widget.key, container);
+        }
+
+        for (const widget of screen) {
+            if (widget.key === "input") mountInputWidget();
+            else renderWidgetInto(widget.key, model, containers);
         }
     }
 
@@ -110,8 +134,7 @@ export function createApp(): {
 
             for (const key of result.changed) {
                 if (key === "input") continue;
-                const container = document.querySelector(`[data-widget="${key}"]`);
-                if (container) renderWidgetInto(container as HTMLElement, key, model);
+                renderWidgetInto(key, model, containers);
             }
         }
     }
