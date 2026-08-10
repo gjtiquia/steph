@@ -34,36 +34,39 @@ const widgetViews: Record<string, (slice: unknown, model: Model) => Tree> = {
 
 const templateCache: Record<string, HTMLTemplateElement> = {};
 
-function cloneTemplate(id: string): HTMLElement {
+function cloneTemplate(id: string): DocumentFragment {
     const template =
         (templateCache[id] ??= document.querySelector<HTMLTemplateElement>(
             `#${id}`,
         )!);
-    return template.content.firstElementChild!.cloneNode(true) as HTMLElement;
+    return template.content.cloneNode(true) as DocumentFragment;
 }
 
-export function renderNode(node: Tree): HTMLElement {
+export function renderNode(node: Tree): DocumentFragment {
     switch (node.type) {
         case "text": {
-            const el = cloneTemplate("tpl-text");
+            const frag = cloneTemplate("tpl-text");
+            const el = frag.firstElementChild as HTMLElement;
             el.textContent = node.text;
-            return el;
+            return frag;
         }
         case "section": {
-            const el = cloneTemplate("tpl-section");
+            const frag = cloneTemplate("tpl-section");
             const container =
-                el.querySelector<HTMLElement>("[data-children]") ?? el;
+                frag.querySelector<HTMLElement>("[data-children]") ?? frag;
             for (const child of node.children) {
                 container.appendChild(renderNode(child));
             }
-            return el;
+            return frag;
         }
         case "list": {
-            const el = cloneTemplate("tpl-list");
-            el.querySelector("[data-title]")!.textContent = node.title;
-            const ul = el.querySelector<HTMLElement>("[data-items]")!;
+            const frag = cloneTemplate("tpl-list");
+            const title = frag.querySelector<HTMLElement>("[data-title]");
+            if (title) title.textContent = node.title;
+            const ul = frag.querySelector<HTMLElement>("[data-items]")!;
             node.options.forEach((option, index) => {
-                const li = cloneTemplate("tpl-list-item");
+                const li = cloneTemplate("tpl-list-item")
+                    .firstElementChild as HTMLElement;
                 const isSelected = index === node.selectedIndex;
                 li.className +=
                     " " +
@@ -72,7 +75,7 @@ export function renderNode(node: Tree): HTMLElement {
                 li.textContent = `${isSelected ? ">" : " "} ${index + 1}) ${option}`;
                 ul.appendChild(li);
             });
-            return el;
+            return frag;
         }
         case "input":
             throw new Error("input nodes are rendered natively on web");
@@ -105,12 +108,12 @@ export function createApp(screen: Widget<unknown>[]): {
         const container = containers.get("input");
         if (!container) return;
 
-        const el = cloneTemplate("tpl-widget-input");
+        const frag = cloneTemplate("tpl-widget-input");
         const tree = input.view(model.input, model);
         const prefix = tree.type === "input" ? tree.prefix : "";
-        const label = el.querySelector<HTMLElement>("[data-prefix]");
-        if (label) label.textContent = prefix;
-        container.appendChild(el);
+        const label = frag.querySelector<HTMLElement>("[data-prefix]");
+        if (label) label.textContent = prefix.trim();
+        container.appendChild(frag);
     }
 
     function mount(root: HTMLElement): void {
