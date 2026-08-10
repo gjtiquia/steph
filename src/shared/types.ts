@@ -4,27 +4,27 @@ export type Msg =
     | { type: "Select"; index: number }
     | { type: "Move"; dir: "up" | "down" | "left" | "right" };
 
-export type InputSlice = { value: string; cursor: number; showCursor: boolean };
+export type InputProps = { value: string; cursor: number; showCursor: boolean };
 
-export type KeyDisplaySlice = { lastKey: string };
+export type KeyDisplayProps = { lastKey: string };
 
-export type ListSlice = { selectedIndex: number };
+export type ListProps = { selectedIndex: number };
 
-export type CountSlice = { count: number };
+export type CountProps = { count: number };
 
-export type StaticTextSlice = Record<string, never>;
+export type StaticTextProps = Record<string, never>;
 
 export type Model = {
-    staticText: StaticTextSlice;
-    input: InputSlice;
-    keyDisplay: KeyDisplaySlice;
-    list: ListSlice;
-    count: CountSlice;
+    staticText: StaticTextProps;
+    input: InputProps;
+    keyDisplay: KeyDisplayProps;
+    list: ListProps;
+    count: CountProps;
 };
 
-export type WidgetSlice =
-    | StaticTextSlice
-    | InputSlice
-    | KeyDisplaySlice
-    | ListSlice
-    | CountSlice;
+export type ComponentProps =
+    | StaticTextProps
+    | InputProps
+    | KeyDisplayProps
+    | ListProps
+    | CountProps;

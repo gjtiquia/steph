@@ -1,4 +1,4 @@
-import type { Widget } from "../widget";
+import type { Component } from "../component";
 import { staticText } from "./staticText";
 import { input } from "./input";
 import { keyDisplay } from "./keyDisplay";
@@ -7,7 +7,7 @@ import { list } from "./list";
 
 export { staticText, input, keyDisplay, countGetter, countSetter, list };
 
-export const homeScreen: Widget<unknown>[] = [
+export const homeScreen: Component<unknown>[] = [
     staticText,
     input,
     keyDisplay,

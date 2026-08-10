@@ -9,17 +9,17 @@ export {
     countSetter,
     list,
     homeScreen,
-} from "./widgets";
+} from "./components";
 
 export type {
     Msg,
-    InputSlice,
-    KeyDisplaySlice,
-    ListSlice,
-    CountSlice,
-    StaticTextSlice,
+    InputProps,
+    KeyDisplayProps,
+    ListProps,
+    CountProps,
+    StaticTextProps,
     Model,
-    WidgetSlice,
+    ComponentProps,
 } from "./types";
 export type { Tree } from "./tree";
-export type { Widget } from "./widget";
+export type { Component } from "./component";

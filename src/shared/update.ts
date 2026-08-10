@@ -1,27 +1,27 @@
 import type { Model, Msg } from "./types";
-import type { Widget } from "./widget";
-import { homeScreen } from "./widgets";
+import type { Component } from "./component";
+import { homeScreen } from "./components";
 import { modelFieldFor, fieldKeysFor } from "./fields";
 
 export function composeUpdate(
     msg: Msg,
     model: Model,
-    widgets: Widget<unknown>[],
+    components: Component<unknown>[],
 ): { model: Model; changed: Set<string> } {
     let next: Model = model;
     const changed = new Set<string>();
 
-    for (const widget of widgets) {
-        const field = modelFieldFor[widget.key];
+    for (const component of components) {
+        const field = modelFieldFor[component.key];
         if (!field) continue;
 
-        const result = widget.update(msg, next[field], next);
+        const result = component.update(msg, next[field], next);
         if (!result.changed) continue;
 
         for (const key of fieldKeysFor[field] ?? []) {
             changed.add(key);
         }
-        next = { ...next, [field]: result.slice } as Model;
+        next = { ...next, [field]: result.props } as Model;
     }
 
     return { model: next, changed };

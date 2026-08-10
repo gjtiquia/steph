@@ -1,12 +1,12 @@
-import type { StaticTextSlice } from "../types";
+import type { StaticTextProps } from "../types";
 import type { Tree } from "../tree";
-import type { Widget } from "../widget";
+import type { Component } from "../component";
 
-export const staticText: Widget<StaticTextSlice> = {
+export const staticText: Component<StaticTextProps> = {
     key: "static-text",
     init: () => ({}),
-    update: (_msg, slice, _model) => ({ slice, changed: false }),
-    view: (_slice, _model): Tree => ({
+    update: (_msg, props, _model) => ({ props, changed: false }),
+    view: (_props, _model): Tree => ({
         type: "section",
         children: [
             { type: "text", text: "" },

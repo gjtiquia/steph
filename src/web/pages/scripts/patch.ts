@@ -13,23 +13,23 @@ import type {
     Msg,
     Model,
     Tree,
-    Widget,
-    StaticTextSlice,
-    InputSlice,
-    KeyDisplaySlice,
-    CountSlice,
-    ListSlice,
+    Component,
+    StaticTextProps,
+    InputProps,
+    KeyDisplayProps,
+    CountProps,
+    ListProps,
 } from "../../../shared";
 
-const widgetViews: Record<string, (slice: unknown, model: Model) => Tree> = {
-    "static-text": (slice, model) =>
-        staticText.view(slice as StaticTextSlice, model),
-    input: (slice, model) => input.view(slice as InputSlice, model),
-    "key-display": (slice, model) =>
-        keyDisplay.view(slice as KeyDisplaySlice, model),
-    "count-getter": (slice, model) => countGetter.view(slice as CountSlice, model),
-    "count-setter": (slice, model) => countSetter.view(slice as CountSlice, model),
-    list: (slice, model) => list.view(slice as ListSlice, model),
+const componentViews: Record<string, (props: unknown, model: Model) => Tree> = {
+    "static-text": (props, model) =>
+        staticText.view(props as StaticTextProps, model),
+    input: (props, model) => input.view(props as InputProps, model),
+    "key-display": (props, model) =>
+        keyDisplay.view(props as KeyDisplayProps, model),
+    "count-getter": (props, model) => countGetter.view(props as CountProps, model),
+    "count-setter": (props, model) => countSetter.view(props as CountProps, model),
+    list: (props, model) => list.view(props as ListProps, model),
 };
 
 const templateCache: Record<string, HTMLTemplateElement> = {};
@@ -82,7 +82,7 @@ export function renderNode(node: Tree): DocumentFragment {
     }
 }
 
-function renderWidgetInto(
+function renderComponentInto(
     key: string,
     model: Model,
     containers: Map<string, HTMLElement>,
@@ -90,25 +90,25 @@ function renderWidgetInto(
     if (key === "input") return;
 
     const container = containers.get(key);
-    const view = widgetViews[key];
+    const view = componentViews[key];
     const field = modelFieldFor[key];
     if (!container || !view || !field) return;
 
     container.replaceChildren(renderNode(view(model[field], model)));
 }
 
-export function createApp(screen: Widget<unknown>[]): {
+export function createApp(screen: Component<unknown>[]): {
     mount(root: HTMLElement): void;
     dispatch(msgs: Msg[]): void;
 } {
     let model: Model = init();
     const containers = new Map<string, HTMLElement>();
 
-    function mountInputWidget(): void {
+    function mountInputComponent(): void {
         const container = containers.get("input");
         if (!container) return;
 
-        const frag = cloneTemplate("tpl-widget-input");
+        const frag = cloneTemplate("tpl-component-input");
         const tree = input.view(model.input, model);
         const prefix = tree.type === "input" ? tree.prefix : "";
         const label = frag.querySelector<HTMLElement>("[data-prefix]");
@@ -117,16 +117,16 @@ export function createApp(screen: Widget<unknown>[]): {
     }
 
     function mount(root: HTMLElement): void {
-        for (const widget of screen) {
+        for (const component of screen) {
             const container = document.createElement("div");
-            container.setAttribute("data-widget", widget.key);
+            container.setAttribute("data-component", component.key);
             root.appendChild(container);
-            containers.set(widget.key, container);
+            containers.set(component.key, container);
         }
 
-        for (const widget of screen) {
-            if (widget.key === "input") mountInputWidget();
-            else renderWidgetInto(widget.key, model, containers);
+        for (const component of screen) {
+            if (component.key === "input") mountInputComponent();
+            else renderComponentInto(component.key, model, containers);
         }
     }
 
@@ -137,7 +137,7 @@ export function createApp(screen: Widget<unknown>[]): {
 
             for (const key of result.changed) {
                 if (key === "input") continue;
-                renderWidgetInto(key, model, containers);
+                renderComponentInto(key, model, containers);
             }
         }
     }

@@ -48,7 +48,7 @@ function Templates() {
             <template id="tpl-list-item">
                 <li class="cursor-pointer px-1 rounded-sm"></li>
             </template>
-            <template id="tpl-widget-input">
+            <template id="tpl-component-input">
                 <label data-prefix></label>
                 <input
                     type="text"

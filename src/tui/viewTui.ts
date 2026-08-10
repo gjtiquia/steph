@@ -31,10 +31,10 @@ export function viewTui(model: Model): {
         }
     }
 
-    for (const widget of homeScreen) {
-        const field = modelFieldFor[widget.key];
+    for (const component of homeScreen) {
+        const field = modelFieldFor[component.key];
         if (!field) continue;
-        flatten(widget.view(model[field], model));
+        flatten(component.view(model[field], model));
     }
 
     return { lines, cursor };

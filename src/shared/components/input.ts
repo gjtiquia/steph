@@ -1,11 +1,11 @@
-import type { InputSlice } from "../types";
+import type { InputProps } from "../types";
 import type { Tree } from "../tree";
-import type { Widget } from "../widget";
+import type { Component } from "../component";
 
-export const input: Widget<InputSlice> = {
+export const input: Component<InputProps> = {
     key: "input",
     init: () => ({ value: "", cursor: 0, showCursor: false }),
-    update: (msg, slice, _model) => {
+    update: (msg, props, _model) => {
         if (msg.type === "Keypress") {
             const isEditing =
                 (msg.text !== undefined && msg.text.length > 0) ||
@@ -14,25 +14,25 @@ export const input: Widget<InputSlice> = {
                 msg.name === "right";
             const showCursor = isEditing;
 
-            if (showCursor === slice.showCursor) return { slice, changed: false };
+            if (showCursor === props.showCursor) return { props, changed: false };
 
-            return { slice: { ...slice, showCursor }, changed: true };
+            return { props: { ...props, showCursor }, changed: true };
         }
 
         if (msg.type === "ValueChanged") {
             return {
-                slice: { value: msg.value, cursor: msg.cursor, showCursor: true },
+                props: { value: msg.value, cursor: msg.cursor, showCursor: true },
                 changed: true,
             };
         }
 
-        return { slice, changed: false };
+        return { props, changed: false };
     },
-    view: (slice, _model): Tree => ({
+    view: (props, _model): Tree => ({
         type: "input",
         prefix: "Type: ",
-        value: slice.value,
-        cursor: slice.cursor,
-        showCursor: slice.showCursor,
+        value: props.value,
+        cursor: props.cursor,
+        showCursor: props.showCursor,
     }),
 };

@@ -8,12 +8,12 @@ function init() {
     count: { count: 0 }
   };
 }
-// src/shared/widgets/staticText.ts
+// src/shared/components/staticText.ts
 var staticText = {
   key: "static-text",
   init: () => ({}),
-  update: (_msg, slice, _model) => ({ slice, changed: false }),
-  view: (_slice, _model) => ({
+  update: (_msg, props, _model) => ({ props, changed: false }),
+  view: (_props, _model) => ({
     type: "section",
     children: [
       { type: "text", text: "" },
@@ -23,42 +23,42 @@ var staticText = {
   })
 };
 
-// src/shared/widgets/input.ts
+// src/shared/components/input.ts
 var input = {
   key: "input",
   init: () => ({ value: "", cursor: 0, showCursor: false }),
-  update: (msg, slice, _model) => {
+  update: (msg, props, _model) => {
     if (msg.type === "Keypress") {
       const isEditing = msg.text !== undefined && msg.text.length > 0 || msg.name === "backspace" || msg.name === "left" || msg.name === "right";
       const showCursor = isEditing;
-      if (showCursor === slice.showCursor)
-        return { slice, changed: false };
-      return { slice: { ...slice, showCursor }, changed: true };
+      if (showCursor === props.showCursor)
+        return { props, changed: false };
+      return { props: { ...props, showCursor }, changed: true };
     }
     if (msg.type === "ValueChanged") {
       return {
-        slice: { value: msg.value, cursor: msg.cursor, showCursor: true },
+        props: { value: msg.value, cursor: msg.cursor, showCursor: true },
         changed: true
       };
     }
-    return { slice, changed: false };
+    return { props, changed: false };
   },
-  view: (slice, _model) => ({
+  view: (props, _model) => ({
     type: "input",
     prefix: "Type: ",
-    value: slice.value,
-    cursor: slice.cursor,
-    showCursor: slice.showCursor
+    value: props.value,
+    cursor: props.cursor,
+    showCursor: props.showCursor
   })
 };
 
-// src/shared/widgets/keyDisplay.ts
+// src/shared/components/keyDisplay.ts
 var keyDisplay = {
   key: "key-display",
   init: () => ({ lastKey: "waiting input..." }),
-  update: (msg, slice, _model) => {
+  update: (msg, props, _model) => {
     if (msg.type !== "Keypress")
-      return { slice, changed: false };
+      return { props, changed: false };
     let lastKey;
     if (msg.name === "backspace")
       lastKey = "Special: Backspace";
@@ -70,77 +70,77 @@ var keyDisplay = {
       lastKey = "Text: " + msg.text;
     else
       lastKey = "Key: " + msg.name;
-    if (lastKey === slice.lastKey)
-      return { slice, changed: false };
-    return { slice: { lastKey }, changed: true };
+    if (lastKey === props.lastKey)
+      return { props, changed: false };
+    return { props: { lastKey }, changed: true };
   },
-  view: (slice, _model) => ({ type: "text", text: slice.lastKey })
+  view: (props, _model) => ({ type: "text", text: props.lastKey })
 };
 
-// src/shared/widgets/count.ts
+// src/shared/components/count.ts
 var countGetter = {
   key: "count-getter",
   init: () => ({ count: 0 }),
-  update: (_msg, slice, _model) => ({ slice, changed: false }),
-  view: (slice, _model) => ({
+  update: (_msg, props, _model) => ({ props, changed: false }),
+  view: (props, _model) => ({
     type: "text",
-    text: "count: " + slice.count + " (this is using shared state)"
+    text: "count: " + props.count + " (this is using shared state)"
   })
 };
 var countSetter = {
   key: "count-setter",
   init: () => ({ count: 0 }),
-  update: (msg, slice, _model) => {
+  update: (msg, props, _model) => {
     if (msg.type !== "Keypress")
-      return { slice, changed: false };
-    return { slice: { count: slice.count + 1 }, changed: true };
+      return { props, changed: false };
+    return { props: { count: props.count + 1 }, changed: true };
   },
-  view: (slice, _model) => ({
+  view: (props, _model) => ({
     type: "text",
-    text: "count: " + slice.count + " (press any key to increment)"
+    text: "count: " + props.count + " (press any key to increment)"
   })
 };
 
-// src/shared/widgets/list.ts
+// src/shared/components/list.ts
 var TITLE = "this is a list with options";
 var OPTIONS = ["option 1", "option 2", "option 3"];
 var list = {
   key: "list",
   init: () => ({ selectedIndex: 0 }),
-  update: (msg, slice, _model) => {
+  update: (msg, props, _model) => {
     if (msg.type === "Select") {
       const selectedIndex = Math.max(0, Math.min(OPTIONS.length - 1, msg.index));
-      if (selectedIndex === slice.selectedIndex)
-        return { slice, changed: false };
-      return { slice: { selectedIndex }, changed: true };
+      if (selectedIndex === props.selectedIndex)
+        return { props, changed: false };
+      return { props: { selectedIndex }, changed: true };
     }
     if (msg.type !== "Keypress")
-      return { slice, changed: false };
+      return { props, changed: false };
     const isUp = msg.name === "up" || msg.text === "k";
     const isDown = msg.name === "down" || msg.text === "j";
     if (isUp) {
-      const selectedIndex = Math.max(0, slice.selectedIndex - 1);
-      if (selectedIndex === slice.selectedIndex)
-        return { slice, changed: false };
-      return { slice: { selectedIndex }, changed: true };
+      const selectedIndex = Math.max(0, props.selectedIndex - 1);
+      if (selectedIndex === props.selectedIndex)
+        return { props, changed: false };
+      return { props: { selectedIndex }, changed: true };
     }
     if (isDown) {
-      const selectedIndex = Math.min(OPTIONS.length - 1, slice.selectedIndex + 1);
-      if (selectedIndex === slice.selectedIndex)
-        return { slice, changed: false };
-      return { slice: { selectedIndex }, changed: true };
+      const selectedIndex = Math.min(OPTIONS.length - 1, props.selectedIndex + 1);
+      if (selectedIndex === props.selectedIndex)
+        return { props, changed: false };
+      return { props: { selectedIndex }, changed: true };
     }
-    return { slice, changed: false };
+    return { props, changed: false };
   },
-  view: (slice, _model) => ({
+  view: (props, _model) => ({
     type: "list",
     title: TITLE,
     options: OPTIONS,
-    selectedIndex: slice.selectedIndex
+    selectedIndex: props.selectedIndex
   })
 };
 
-// src/shared/widgets/index.ts
+// src/shared/components/index.ts
 var homeScreen = [
   staticText,
   input,
@@ -168,20 +168,20 @@ var fieldKeysFor = {
 };
 
 // src/shared/update.ts
-function composeUpdate(msg, model, widgets) {
+function composeUpdate(msg, model, components) {
   let next = model;
   const changed = new Set;
-  for (const widget of widgets) {
-    const field = modelFieldFor[widget.key];
+  for (const component of components) {
+    const field = modelFieldFor[component.key];
     if (!field)
       continue;
-    const result = widget.update(msg, next[field], next);
+    const result = component.update(msg, next[field], next);
     if (!result.changed)
       continue;
     for (const key of fieldKeysFor[field] ?? []) {
       changed.add(key);
     }
-    next = { ...next, [field]: result.slice };
+    next = { ...next, [field]: result.props };
   }
   return { model: next, changed };
 }
@@ -222,13 +222,13 @@ function fromClick(e) {
 }
 
 // src/web/pages/scripts/patch.ts
-var widgetViews = {
-  "static-text": (slice, model) => staticText.view(slice, model),
-  input: (slice, model) => input.view(slice, model),
-  "key-display": (slice, model) => keyDisplay.view(slice, model),
-  "count-getter": (slice, model) => countGetter.view(slice, model),
-  "count-setter": (slice, model) => countSetter.view(slice, model),
-  list: (slice, model) => list.view(slice, model)
+var componentViews = {
+  "static-text": (props, model) => staticText.view(props, model),
+  input: (props, model) => input.view(props, model),
+  "key-display": (props, model) => keyDisplay.view(props, model),
+  "count-getter": (props, model) => countGetter.view(props, model),
+  "count-setter": (props, model) => countSetter.view(props, model),
+  list: (props, model) => list.view(props, model)
 };
 var templateCache = {};
 function cloneTemplate(id) {
@@ -271,11 +271,11 @@ function renderNode(node) {
       throw new Error("input nodes are rendered natively on web");
   }
 }
-function renderWidgetInto(key, model, containers) {
+function renderComponentInto(key, model, containers) {
   if (key === "input")
     return;
   const container = containers.get(key);
-  const view = widgetViews[key];
+  const view = componentViews[key];
   const field = modelFieldFor[key];
   if (!container || !view || !field)
     return;
@@ -284,11 +284,11 @@ function renderWidgetInto(key, model, containers) {
 function createApp(screen) {
   let model = init();
   const containers = new Map;
-  function mountInputWidget() {
+  function mountInputComponent() {
     const container = containers.get("input");
     if (!container)
       return;
-    const frag = cloneTemplate("tpl-widget-input");
+    const frag = cloneTemplate("tpl-component-input");
     const tree = input.view(model.input, model);
     const prefix = tree.type === "input" ? tree.prefix : "";
     const label = frag.querySelector("[data-prefix]");
@@ -297,17 +297,17 @@ function createApp(screen) {
     container.appendChild(frag);
   }
   function mount(root) {
-    for (const widget of screen) {
+    for (const component of screen) {
       const container = document.createElement("div");
-      container.setAttribute("data-widget", widget.key);
+      container.setAttribute("data-component", component.key);
       root.appendChild(container);
-      containers.set(widget.key, container);
+      containers.set(component.key, container);
     }
-    for (const widget of screen) {
-      if (widget.key === "input")
-        mountInputWidget();
+    for (const component of screen) {
+      if (component.key === "input")
+        mountInputComponent();
       else
-        renderWidgetInto(widget.key, model, containers);
+        renderComponentInto(component.key, model, containers);
     }
   }
   function dispatch(msgs) {
@@ -317,7 +317,7 @@ function createApp(screen) {
       for (const key of result.changed) {
         if (key === "input")
           continue;
-        renderWidgetInto(key, model, containers);
+        renderComponentInto(key, model, containers);
       }
     }
   }

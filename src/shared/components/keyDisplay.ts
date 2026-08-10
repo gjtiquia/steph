@@ -1,12 +1,12 @@
-import type { KeyDisplaySlice } from "../types";
+import type { KeyDisplayProps } from "../types";
 import type { Tree } from "../tree";
-import type { Widget } from "../widget";
+import type { Component } from "../component";
 
-export const keyDisplay: Widget<KeyDisplaySlice> = {
+export const keyDisplay: Component<KeyDisplayProps> = {
     key: "key-display",
     init: () => ({ lastKey: "waiting input..." }),
-    update: (msg, slice, _model) => {
-        if (msg.type !== "Keypress") return { slice, changed: false };
+    update: (msg, props, _model) => {
+        if (msg.type !== "Keypress") return { props, changed: false };
 
         let lastKey: string;
         if (msg.name === "backspace") lastKey = "Special: Backspace";
@@ -16,9 +16,9 @@ export const keyDisplay: Widget<KeyDisplaySlice> = {
             lastKey = "Text: " + msg.text;
         else lastKey = "Key: " + msg.name;
 
-        if (lastKey === slice.lastKey) return { slice, changed: false };
+        if (lastKey === props.lastKey) return { props, changed: false };
 
-        return { slice: { lastKey }, changed: true };
+        return { props: { lastKey }, changed: true };
     },
-    view: (slice, _model): Tree => ({ type: "text", text: slice.lastKey }),
+    view: (props, _model): Tree => ({ type: "text", text: props.lastKey }),
 };
